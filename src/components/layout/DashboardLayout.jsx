@@ -102,7 +102,7 @@ export default function App({role}) {
   const navigate = useNavigate();
   const { token } = theme.useToken();
   const containerRef = useRef(null); 
-  const { lastRollover }=useSelector((state)=>role==='master' ? state.Master : state.Manager)
+  const { lastRollover }=useSelector((state)=>state.Master)
 
 
   const showDrawer = () => setOpen(!open);

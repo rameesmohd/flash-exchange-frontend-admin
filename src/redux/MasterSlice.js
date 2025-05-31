@@ -1,7 +1,7 @@
 import { createSlice } from '@reduxjs/toolkit';
 
 export const masterSlice = createSlice({
-  name: 'Master',
+  name: 'Admin',
   initialState: {
     token : null,
     masterData : null,

@@ -67,17 +67,10 @@ const Withdrawal = () => {
           key: 'userId',
         },
         {
-          title : "amount",
-          dataIndex : "amount",
-          key : "amount",
-          render : (text)=> <div>{`${text}`}</div>
-        },
-   
-        {
           title: 'Amount',
           dataIndex: 'amount',
           key: 'amount',
-          render : (text)=> <div>{`+$${text}`}</div>
+          render : (text)=> <div className='text-red-600'>{`-$${text}`}</div>
         },
         {
           title: 'Payment Mode',
@@ -205,7 +198,7 @@ const Withdrawal = () => {
             // style={{ width: 300 }}
             />
         </Flex>
-        <Text className='text-red-600 font-semibold'>Total Withdrawal : {totalWithdrawedAmount}</Text>
+        <Text className='font-semibold'>Total Withdrawal : <span className='text-red-600'>{totalWithdrawedAmount || 0}</span></Text>
         <div className=' w-full h-full'>
             <Table
               scroll={{ x: "max-content" }}

@@ -189,7 +189,7 @@ const Orders = () => {
         <div className='p-2 my-2'>
         <div className='text-lg mb-2'>Orders History</div>
         <Flex className='flex-col sm:flex-row my-3 items-center' gap={6} justify='space-between'>
-          <Radio.Group className='mx-1 w-full -z-50' onChange={handleStatusChange} defaultValue='pending'>
+          <Radio.Group className='mx-1 w-full flex -z-50' onChange={handleStatusChange} defaultValue='pending'>
             <Radio.Button value=''>All</Radio.Button>
             <Radio.Button value='pending'>Pending</Radio.Button>
             <Radio.Button value='approved'>Approved</Radio.Button>
@@ -204,13 +204,13 @@ const Orders = () => {
             // style={{ width: 300 }}
             />
         </Flex>
-        <Text className='text-red-600 font-semibold'>Total Orders : {totalCompletedAmount}</Text>
+        <Text className='font-semibold'>Total Orders : {totalCompletedAmount}</Text>
         <div className=' w-full h-full'>
             <Table
               scroll={{ x: "max-content" }}
               loading={loading} 
               columns={getColumns(Orders)} 
-              dataSource={Orders} 
+              dataSource={Orders}
               rowKey="_id"
               pagination={{
                 current: queryObjects.currentPage,

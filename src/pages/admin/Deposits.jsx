@@ -197,7 +197,7 @@ const Deposits = () => {
           </div>
           <Button type='primary' className='bg-blue-500 text-white my-2 w-full sm:w-44' onClick={() => navigate('/master/add-funds')}>Add Funds to user</Button>
         </Flex>
-        <Text className='text-green-600 font-semibold'>Total Deposit : {totalDepositedAmount}</Text>
+        <Text className='font-semibold'>Total Deposit : <span className='text-green-600'>{totalDepositedAmount || 0}</span></Text>
         <Table
           columns={getColumns}
           dataSource={deposits}

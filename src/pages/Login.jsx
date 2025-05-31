@@ -4,7 +4,6 @@ import logo from '../assets/logo.png'
 import {Button, Typography } from 'antd'
 import { useDispatch, useSelector } from 'react-redux'
 import { adminPost } from '../services/adminApi'
-import { setManagerData, setManagerToken } from '../redux/ManagerSlice'
 import { setToken } from '../redux/MasterSlice'
   
 const InputField = ({
