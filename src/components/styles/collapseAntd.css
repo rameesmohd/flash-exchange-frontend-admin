@@ -1,0 +1,33 @@
+/* Removes all margins, borders, and padding from Collapse and Panel */
+.no-padding-collapse {
+  background: transparent;
+  border: none;
+  margin: 0;
+  padding: 0;
+}
+
+.no-padding-collapse .ant-collapse-item {
+  border: none;
+  margin: 0;
+  padding: 0;
+}
+
+.no-padding-panel {
+  margin: 0;
+  padding: 0;
+}
+
+.no-padding-panel .ant-collapse-header {
+  padding: 0 !important;
+  margin: 0;
+  line-height: 1; /* Adjust if needed */
+}
+
+.no-padding-panel .ant-collapse-content {
+  padding: 0 !important;
+}
+
+.no-padding-panel .ant-collapse-content-box {
+  padding: 0 !important;
+  margin: 0;
+}

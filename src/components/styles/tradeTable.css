@@ -1,0 +1,25 @@
+/* Customizing individual column header styles */
+.header-text {
+    font-size: 14px;
+    font-weight: 500;
+    color: #555;
+    text-align: center;
+  }
+  
+/* Custom table styles */
+.custom-table .ant-table-cell {
+  padding: 8px; /* Minimal padding for each cell */
+}
+
+.custom-table .ant-table-thead > tr > th {
+  padding: 8px; /* Minimal padding for header cells */
+  background: #fafafa; /* Optional: Light background for header */
+}
+
+.custom-table .ant-table-tbody > tr > td {
+  padding: 4px; /* Minimal padding for body cells */
+}
+
+.custom-table .ant-table-tbody > tr {
+  margin: 0; /* Avoid extra margins between rows */
+}
