@@ -1,15 +1,14 @@
 import { BrowserRouter,Routes , Route, Navigate } from 'react-router-dom'
-import Users from './pages/master/Users'
-import Manager from './pages/master/Manager'
-import Transactions from './pages/Transactions'
+import Users from './pages/admin/Users'
 import DashboardLayout from './components/layout/DashboardLayout'
-import InvestmentDetail from './pages/InvestmentDetail'
 import Login from './pages/Login'
 import { useSelector } from 'react-redux'
-import Deposits from './pages/master/Deposits'
-import Withdrawal from './pages/master/Withdrawal'
-import AddFunds from './pages/master/AddFunds'
-import SendEmail from './pages/master/SendEmail'
+import Deposits from './pages/admin/Deposits'
+import Withdrawal from './pages/admin/Withdrawal'
+import AddFunds from './pages/admin/AddFunds'
+import SendEmail from './pages/admin/SendEmail'
+import Funds from './pages/admin/Funds'
+import Orders from './pages/admin/Orders'
 
 function App() {
   const adminToken = useSelector((state) => state.Admin?.token);
@@ -22,12 +21,14 @@ function App() {
       <Routes>
         <Route path='/login' element={<Login/>}/>
         <Route path='/' element={<PrivateMasterRoute element={<DashboardLayout />}/>}>
-            <Route index element={<PrivateMasterRoute element={<Manager/>}/>}/>
+            {/* main */}
             <Route path='deposits' element={<PrivateMasterRoute element={<Deposits/>}/>}/>
             <Route path='withdrawal' element={<PrivateMasterRoute element={ <Withdrawal/> }/>}/>
-            <Route path='orders' element={<PrivateMasterRoute element={ <Withdrawal/> }/>}/>
+            <Route path='orders' element={<PrivateMasterRoute element={ <Orders/> }/>}/>
             <Route path='users' element={<PrivateMasterRoute element={<Users />}/>}/>
-            <Route path='transactions' element={<PrivateMasterRoute element={<Transactions />}/>}/>
+            <Route path='funds' element={<PrivateMasterRoute element={<Funds />}/>}/>
+            
+            {/* Extra */}
             <Route path='add-funds' element={<PrivateMasterRoute element={<AddFunds/>}/>}/>
             <Route path='send-email' element={<PrivateMasterRoute element={<SendEmail/>}/>}/>
         </Route>

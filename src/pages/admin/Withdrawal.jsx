@@ -1,7 +1,7 @@
 import { Button, DatePicker, Input, Table,Radio, Flex ,Typography} from 'antd';
 import React, { useEffect, useState } from 'react'
 import {formatDate } from '../../services/formatDate'
-import { masterGet, masterPatch } from '../../services/adminApi';
+import { adminGet, adminPatch } from '../../services/adminApi';
 import { Tag } from 'antd';
 
 const { RangePicker } = DatePicker;
@@ -31,7 +31,7 @@ const Withdrawal = () => {
     const [totalWithdrawedAmount,setTotalWithdrawedAmount]=useState(0)
   const handleWithdrawStatus =async({status,_id})=>{
       try {
-        const response = await masterPatch('/withdrawals',{status,_id})
+        const response = await adminPatch('/withdrawals',{status,_id})
         if(response){
           fetchWithdrawal()
         }
@@ -51,32 +51,28 @@ const Withdrawal = () => {
           title: 'Date',
           dataIndex: 'createdAt',
           key: 'createdAt',
-          render : (text)=>formatDate(text)
+          render : (text)=>formatDate(text),
+          width : 120
         },
         {
-          title: 'Email',
-          dataIndex: 'user',
-          key: 'user',
-          render : (text)=> <div>{`${text.email}`}</div>
+          title: 'Transaction Id',
+          dataIndex: 'transactionId',
+          key: 'transactionId',
+          render : (text)=> <div>{`#${text}`}</div>,
+          width : 120
         },
         {
-          title: 'Name',
-          dataIndex: 'user',
-          key: 'user',
-          render : (text)=> <div>{`${text.first_name+" "+text.last_name}`}</div>
+          title: 'User Id',
+          dataIndex: 'userId',
+          key: 'userId',
         },
         {
-          title : "Txid",
-          dataIndex : "transaction_id",
-          key : "transaction_id",
-          render : (text)=> <div>{`#${text}`}</div>
+          title : "amount",
+          dataIndex : "amount",
+          key : "amount",
+          render : (text)=> <div>{`${text}`}</div>
         },
-        {
-          title : "Wallet",
-          dataIndex : "wallet_id",
-          key : "wallet_id",
-          render : (text)=> <div>{`#${text}`}</div>
-        },
+   
         {
           title: 'Amount',
           dataIndex: 'amount',
@@ -85,8 +81,8 @@ const Withdrawal = () => {
         },
         {
           title: 'Payment Mode',
-          dataIndex: 'payment_mode',
-          key: 'payment_mode',
+          dataIndex: 'paymentMode',
+          key: 'paymentMode',
           render : (text)=> <div className='capitalize'>{text}</div>
         },
         {
@@ -95,18 +91,12 @@ const Withdrawal = () => {
           key: 'status',
           render: (status) => getStatusTag(status),
         },
-        { 
-          title : 'Recipient Address',
-          dataIndex : 'recipient_address',
-          key : 'recipient_address',
-          
+          {
+          title : "Recieve Address",
+          dataIndex : "recieveAddress",
+          key : "recieveAddress",
+          render : (text)=> <div>{`${text}`}</div>
         },
-        // {
-        //   title: 'User Id',
-        //   dataIndex: 'user',
-        //   key: 'user',
-        //   render : (text)=> <div>{`${text}`}</div>
-        // },
         { 
           title : '',
           key : '_id',
@@ -130,7 +120,7 @@ const Withdrawal = () => {
       setLoading(true)
       try {
         const { search, from, to, status, currentPage, pageSize } = queryObjects;
-        const response = await masterGet(
+        const response = await adminGet(
           `/withdrawals?search=${search}&from=${from}&to=${to}&status=${status}&currentPage=${currentPage}&pageSize=${pageSize}`
         )
         if(response){
@@ -198,24 +188,22 @@ const Withdrawal = () => {
   return (
     <>
         <div className='p-2 my-2'>
-        <Flex justify='space-between'>
         <div className='text-lg'>Withdrawals History</div>
-        <div className='flex items-center'>
-          <RangePicker className='h-8 mx-1' onChange={handleDateRange} />
-          <Radio.Group className='mx-1' onChange={handleStatusChange} defaultValue='pending'>
+        <Flex className='flex-col sm:flex-row gap-2 my-2' justify='space-between'>
+          <Radio.Group className='mx-1 flex w-full -z-50' onChange={handleStatusChange} defaultValue='pending'>
             <Radio.Button value=''>All</Radio.Button>
             <Radio.Button value='pending'>Pending</Radio.Button>
             <Radio.Button value='approved'>Approved</Radio.Button>
             <Radio.Button value='rejected'>Rejected</Radio.Button>
           </Radio.Group>
+          <RangePicker className='h-8 mx-1 w-full' onChange={handleDateRange} />
           <Search
-            className='mx-1'
+            className='mx-1 w-full sm:w-96'
             placeholder='email, txid, wallet id'
             allowClear
             onSearch={handleSearch}
-            style={{ width: 300 }}
+            // style={{ width: 300 }}
             />
-        </div>
         </Flex>
         <Text className='text-red-600 font-semibold'>Total Withdrawal : {totalWithdrawedAmount}</Text>
         <div className=' w-full h-full'>

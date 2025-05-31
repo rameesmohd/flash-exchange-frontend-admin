@@ -1,9 +1,9 @@
 import { message } from 'antd';
-import masterAxios from '../axios/masterAxios'
+import adminAxios from '../axios/adminAxios'
 import { masterLogout } from '../redux/MasterSlice';
 import { jwtDecode } from 'jwt-decode';
 import { store } from '../redux/Store';
-const axiosInstance = masterAxios()
+const axiosInstance = adminAxios()
 
 const getToken = () => {
     const storedUser = localStorage.getItem("persist:Master");

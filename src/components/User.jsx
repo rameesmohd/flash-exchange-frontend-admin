@@ -1,13 +1,13 @@
 import React, { useEffect, useState } from 'react'
 import InfoRow from './InfoRow';
 import './styles/collapseAntd.css'
-import { managerGet } from '../services/managerApi';
+import { adminGet } from '../services/adminApi';
 
 const App = ({investmentData}) => {
   const [userData,setUserData]=useState({})
 
   const fetchUser=async()=>{
-      const response = await managerGet(`/user?_id=${investmentData.user._id}`)
+      const response = await adminGet(`/user?_id=${investmentData.user._id}`)
       if(response){
           console.log(response);
           setUserData(response.result)

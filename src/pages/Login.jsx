@@ -3,9 +3,8 @@ import { useNavigate } from 'react-router-dom'
 import logo from '../assets/logo.png'
 import {Button, Typography } from 'antd'
 import { useDispatch, useSelector } from 'react-redux'
-import { managerPost } from '../services/managerApi'
+import { adminPost } from '../services/adminApi'
 import { setManagerData, setManagerToken } from '../redux/ManagerSlice'
-import { masterPost } from '../services/adminApi'
 import { setToken } from '../redux/MasterSlice'
   
 const InputField = ({

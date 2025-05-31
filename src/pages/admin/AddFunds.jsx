@@ -1,6 +1,6 @@
 import { Input, Button, Form, Card, Select, Flex } from 'antd';
 import React, { useState } from 'react';
-import { masterPost } from '../../services/adminApi';
+import { adminPost } from '../../services/adminApi';
 
 const AddFunds = () => {
   const [form] = Form.useForm();
@@ -12,7 +12,7 @@ const AddFunds = () => {
     
     setLoading(true);
     try {
-        await masterPost('/add-to-wallet',values)
+        await adminPost('/add-to-wallet',values)
     } catch (error) {
         console.log(error);
     } finally {

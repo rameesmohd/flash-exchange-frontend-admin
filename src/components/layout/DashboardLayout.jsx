@@ -4,7 +4,7 @@ import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { Outlet } from 'react-router-dom'
 import { AppstoreOutlined, BellOutlined, LogoutOutlined, MenuOutlined, SettingOutlined } from '@ant-design/icons';
 import logo from '../../assets/logo.png'
-import { masterSidebarOptions } from '../../content/dashboard/sidebar';
+import { adminSidebarOptions } from '../../content/dashboard/sidebar';
 import { notification as notificationIcon, profile as profileIcon,wallet as walletIcon } from '../../assets/dashboard'
 import { useSelector } from 'react-redux';
 import {formatDate} from '../../services/formatDate'
@@ -34,7 +34,7 @@ const items = [
 const itemsList = [
   {
     key: 'sub2',
-    label: 'My Wallet    0.00',
+    label: 'My Wallet',
     icon: <img src={walletIcon} className='text-gray-500' alt="Wallet Icon" width={24} height={24} />,
     children: [
       {
@@ -133,9 +133,9 @@ export default function App({role}) {
             <div className='text-lg capitalize'>E Value Admin</div>
           </Link>
             
-             <div className='text-xs text-right hidden sm:block'>
-              <UTCClock/>
-              </div>
+          {/* <div className='text-xs text-right hidden sm:block'>
+          <UTCClock/>
+          </div> */}
           
         </div>
       </nav>
@@ -149,7 +149,7 @@ export default function App({role}) {
         {/* Sidebar for large screens */}
         <aside className="hidden lg:block w-64 fixed top-16 left-0 h-full bg-white shadow-md">
           <div className="p-2 space-y-2">
-             { listButtons(masterSidebarOptions)}
+             { listButtons(adminSidebarOptions)}
           </div>
         </aside>
 
@@ -157,7 +157,6 @@ export default function App({role}) {
         <Drawer
           placement="left"
           onClose={onClose}
-
           open={open}
           getContainer={() => containerRef.current} 
           width="16rem"
@@ -167,11 +166,11 @@ export default function App({role}) {
             top: '60px', 
             boxShadow: 'none',
             border: 'none',
-            padding : 0
+            padding : 0,
           }}
           bodyStyle={{
             padding: 0, 
-            margin: 0,  
+            margin: 0,
           }}
           headerStyle={{
             display: 'none', 
@@ -179,12 +178,12 @@ export default function App({role}) {
           title={null} 
           >
         <div className="space-y-2">
-          {listButtons(masterSidebarOptions) }
+          {listButtons(adminSidebarOptions) }
           </div>
         </Drawer>
       </div>
 
-      <div className='h-screen w-full pt-16 lg:pl-64 '>
+      <div className='sm:h-screen w-full pt-16 lg:pl-64 '>
          <div className='w-full px-2'>
             <Outlet />
          </div>

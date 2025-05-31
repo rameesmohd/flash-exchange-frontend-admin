@@ -10,7 +10,7 @@ const { Search } = Input;
 const { RangePicker } = DatePicker;
 
 const MyInvestments = () => {
-  const [usersList,setUsersList]=useState([])
+  const [fundList,setFundList]=useState([])
   const dispatch = useDispatch()
   const [loading,setLoading]=useState(false)
   const [changeEmail,setChangeEmail]=useState({
@@ -35,66 +35,48 @@ const MyInvestments = () => {
       render: (_text, _record, index) => index + 1, // Adding 1 to start from 1 instead of 0
     },
     {
-      title:  <span className='text-gray-500 font-normal'>Email </span>,
-      dataIndex: 'email',
-      key: 'email',
+      title:  <span className='text-gray-500 font-normal'>Type </span>,
+      dataIndex: 'type',
+      key: 'type',
       render: (text,record) => <a className='text-blue-600 cursor-pointer' onClick={(e)=>setChangeEmail((prev)=>({...prev,show : true,user_id : record._id}))}>{text}</a>,
+      width : 120
     },
     {
-      title: <span className='text-gray-500 font-normal'>Phone</span>,
-      dataIndex: 'phone',
-      key: 'phone',
-      render :(value,data)=>`${value}`
-    },
-    {
-      title: <div className='flex'>
-        <span className='text-gray-500 font-normal mr-1 w-32'>Join Date </span>
+      title: <div className='flex w-32'>
+        <span className='text-gray-500 font-normal mr-1 '>Join Date </span>
         <img src={timerIcon} alt="" />
       </div> ,
       key: 'createdAt',
       dataIndex: 'createdAt',
-      render: (text) => <a>{formatDate(text)}</a>, 
-    },
-    {
-      title:<span className='text-gray-500 font-normal'>Kyc Verified</span>,
-      dataIndex: 'is_kyc_verified',
-      key: 'is_kyc_verified',
-      render : (text)=> <a href="">{`${text}`}</a>
+      render: (text) => <a>{text && formatDate(text)}</a>, 
     },
     {
       title:<span className='text-gray-500 font-normal'>Proccessing Amount</span>,
-      dataIndex: 'processing',
-      key: 'processing',
-      render : (text)=> <a href="">{`$${Math.floor(text.rebate_wallet).toFixed(2)}`}</a>
+      dataIndex: 'rate',
+      key: 'rate',
+      render : (text)=> <a href="">{`$${Math.floor(text).toFixed(2)}`}</a>
     },
     {
-      title:<span className='text-gray-500 font-normal'>Available Balance</span>,
-      dataIndex: 'availableBalance',
-      key: 'availableBalance',
-      render : (text)=> <a href="">{`$${Math.floor(text.main_wallet).toFixed(2)}`}</a>
+      title:<span className='text-gray-500 font-normal'>Status</span>,
+      dataIndex: 'status',
+      key: 'status',
+      render : (text)=><div className='capitalize'>{text}</div>
     },
     {
-      title:<span className='text-gray-500 font-normal'>Dispute Amount</span>,
-      dataIndex: 'disputeAmount',
-      key: 'disputeAmount',
-      render : (text)=> <a href="">{`$${Math.floor(text.main_wallet).toFixed(2)}`}</a>
-    },
-    {
-      title:<span className='text-gray-500 font-normal'></span>,
-      dataIndex: '_id',
-      key: '_id',
-      render : (value)=>(<Button>More details</Button>)
+      title:<span className='text-gray-500 font-normal'>Max Fullfilment</span>,
+      dataIndex: 'maxFulfillmentTime',
+      key: 'maxFulfillmentTime',
+      render : (text)=> <a href="">{`${Number(text).toFixed(2)} Hours`}</a>
     },
   ];
 
   const fetchUsers=async()=>{
     setLoading(true)
     try {
-      const response = await adminGet(
-        `/users?search=${queryObjects.search}&from=${queryObjects.from}&to=${queryObjects.to}`)
+      const response = await adminGet(`/funds`)
       if(response){
-       setUsersList(response.users)
-       console.log(usersList , 'usersList')
+       setFundList(response.funds)
+       console.log(fundList , 'fundList')
       }
     } catch (error) {
       console.log(error);
@@ -106,24 +88,6 @@ const MyInvestments = () => {
   useEffect(()=>{
     fetchUsers()
   },[queryObjects])
-
-  const submitNewEmail=async()=>{
-    setChangeEmail((prev)=>({...prev,loading : true}))
-    try {    
-      const response =  await adminPost('/change-email',{newEmail : changeEmail.newEmail,user_id : changeEmail.user_id})
-      if(response) { 
-        fetchUsers()
-      }
-    } catch (error) {
-    
-    } finally {
-      setChangeEmail({ show : false,
-        user_id : "",
-        newEmail : "",
-        loading : false
-      })
-    }
-  }
 
   const handleSearch = (value) => {
     setQueryObjects((prev) => ({
@@ -167,22 +131,14 @@ const MyInvestments = () => {
     <>
     <div className='sm:p-6'>
       <Flex justify='space-between' align='center'>
-      <div className='text-2xl  font-bold my-3'>Users</div>
-      <RangePicker className='h-8 mx-1' onChange={handleDateRange} />
-      <Search
-            className='mx-1'
-            placeholder='email'
-            allowClear
-            onSearch={handleSearch}
-            style={{ width: 300 }}
-            />
-      <Button onClick={()=>navigate('/master/send-email')}>Send Email To User</Button>
+      <div className='text-2xl  font-bold my-3'>Funds</div>
+      <Button>Add Fund</Button>
       </Flex>
       <Table
         loading={loading}
         className='overflow-y-auto border hide-scrollbar'
         columns={columns} 
-        dataSource={usersList}
+        dataSource={fundList}
         rowKey="_id"
         pagination={{
           current: queryObjects.currentPage,
@@ -200,9 +156,6 @@ const MyInvestments = () => {
         }}
       />
     </div>
-    <Modal title="Enter new email"  okType='default'  confirmLoading={changeEmail.loading} onOk={()=>submitNewEmail()} onCancel={()=>setChangeEmail((prev)=>({...prev,show : false,user_id : ""}))} open={changeEmail.show}>
-        <Input onChange={(e)=>setChangeEmail((prev)=>({...prev,newEmail:e.target.value}))} placeholder='Email'></Input>
-    </Modal>
     </>
   )
 }

@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Input, Button, Form, Card, message } from 'antd';
-import { masterPost } from '../../services/adminApi';
+import { adminPost } from '../../services/adminApi';
 
 const { TextArea } = Input;
 
@@ -11,7 +11,7 @@ const SendEmail = () => {
   const handleSend = async (values) => {
     setLoading(true);
     try {
-      const res = await masterPost('/send-email',values);
+      const res = await adminPost('/send-email',values);
       if (res.success) {
         message.success('Email sent successfully!');
         form.resetFields();

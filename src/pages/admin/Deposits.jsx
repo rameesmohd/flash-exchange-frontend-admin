@@ -1,8 +1,7 @@
 import { Button, DatePicker, Flex, Radio, Table, Tag, Input, Space, Typography } from 'antd';
 import React, { useEffect, useState } from 'react';
 import { formatDate } from '../../services/formatDate';
-import { masterGet } from '../../services/adminApi';
-import ShowAddressModel from '../../components/master/ShowAddressModel';
+import { adminGet } from '../../services/adminApi';
 import { useNavigate } from 'react-router-dom';
 
 const { RangePicker } = DatePicker;
@@ -40,7 +39,7 @@ const Deposits = () => {
   const fetchAddress = async (id) => {
     setLoadingStates((prev) => ({ ...prev, [id]: true }));
     try {
-      const response = await masterGet(`/fetch-address?_id=${id}`);
+      const response = await adminGet(`/fetch-address?_id=${id}`);
       if (response) {
         setModalData(response);
         setIsModalOpen(true);
@@ -63,43 +62,27 @@ const Deposits = () => {
       title: 'Date',
       dataIndex: 'createdAt',
       key: 'createdAt',
-      render: (text) => formatDate(text),
+      render : (text)=>formatDate(text),
+      width : 120
     },
     {
-      title: 'Email',
-      dataIndex: 'user',
-      key: 'user_email',
-      render: (text) => <div>{text?.email}</div>,
+      title: 'Transaction Id',
+      dataIndex: 'transactionId',
+      key: 'transactionId',
+      render: (text) => <div>#{text}</div>,
+      width : 120
     },
     {
-      title: 'Name',
-      dataIndex: 'user',
-      key: 'user_name',
-      render: (text) => <div>{`${text?.first_name} ${text?.last_name}`}</div>,
-    },
-    {
-      title: 'Txid',
-      dataIndex: 'transaction_id',
-      key: 'transaction_id',
-      render: (text) => <div>{`#${text}`}</div>,
-    },
-    {
-      title: 'Wallet',
-      dataIndex: 'wallet_id',
-      key: 'wallet_id',
+      title: 'Payment Mode',
+      dataIndex: 'paymentMode',
+      key: 'paymentMode',
       render: (text) => <div>{`#${text}`}</div>,
     },
     {
       title: 'Amount',
       dataIndex: 'amount',
       key: 'amount',
-      render: (text) => <div>{`+$${text}`}</div>,
-    },
-    {
-      title: 'Payment Mode',
-      dataIndex: 'payment_mode',
-      key: 'payment_mode',
-      render: (text) => <div className='capitalize'>{text}</div>,
+      render: (text) => <div className='text-green-600'>{`+$${text}`}</div>,
     },
     {
       title: 'Status',
@@ -109,16 +92,13 @@ const Deposits = () => {
     },
     {
       title: 'Payment address',
-      dataIndex: 'payment_address',
-      key: 'payment_address',
+      dataIndex: 'recieveAddress',
+      key: 'recieveAddress',
       render: (_text, record) => (
-        <Button
-          key={record._id}
-          loading={loadingStates[record._id] || false}
-          onClick={() => fetchAddress(record._id)}
-        >
-          Open address
-        </Button>
+       <div>
+          <div>Priority: 1</div>
+          <div>Address: {_text}</div>
+       </div>
       ),
     },
   ];
@@ -127,7 +107,7 @@ const Deposits = () => {
     setLoading(true);
     try {
       const { search, from, to, status, currentPage, pageSize } = queryObjects;
-      const response = await masterGet(
+      const response = await adminGet(
         `/deposits?search=${search}&from=${from}&to=${to}&status=${status}&currentPage=${currentPage}&pageSize=${pageSize}`
       );
       if (response) {
@@ -197,25 +177,25 @@ const Deposits = () => {
   return (
     <>
       <div className='p-2 my-2'>
-        <Flex justify='space-between'>
           <div className=' text-lg'>Deposits History</div>
-          <div className='flex items-center'>
-            <RangePicker className='h-8 mx-1' onChange={handleDateRange} />
-            <Radio.Group className='mx-1' onChange={handleStatusChange} defaultValue='approved'>
+        <Flex className='flex-col sm:flex-row items-center my-2' justify='space-between'>
+          <div className='flex flex-col sm:flex-row items-center w-full'>
+            <Radio.Group className='mx-1 my-1 flex w-full -z-50' onChange={handleStatusChange} defaultValue='approved'>
               <Radio.Button value=''>All</Radio.Button>
               <Radio.Button value='pending'>Pending</Radio.Button>
               <Radio.Button value='approved'>Approved</Radio.Button>
               <Radio.Button value='rejected'>Rejected</Radio.Button>
             </Radio.Group>
+            <RangePicker className='h-8 mx-1 w-full my-1' onChange={handleDateRange} />
             <Search
-              className='mx-1'
+              className='mx-1 my-1 w-full sm:w-96'
               placeholder='email, txid, wallet id'
               allowClear
               onSearch={handleSearch}
-              style={{ width: 300 }}
+              // style={{ width: 300 }}
             />
           </div>
-          <Button onClick={() => navigate('/master/add-funds')}>Add Funds to user</Button>
+          <Button type='primary' className='bg-blue-500 text-white my-2 w-full sm:w-44' onClick={() => navigate('/master/add-funds')}>Add Funds to user</Button>
         </Flex>
         <Text className='text-green-600 font-semibold'>Total Deposit : {totalDepositedAmount}</Text>
         <Table
@@ -239,11 +219,7 @@ const Deposits = () => {
           }}
         />
 
-        <ShowAddressModel
-          setIsModalOpen={setIsModalOpen}
-          isModalOpen={isModalOpen}
-          data={modalData}
-        />
+
       </div>
     </>
   );

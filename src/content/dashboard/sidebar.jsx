@@ -5,11 +5,14 @@ withdrawal,
 settings,
 } from '../../assets/dashboard/index'
 
-const masterSidebarOptions = 
+const adminSidebarOptions = 
   [
     { 
       icon : investment,       
       title: "Users", nav: '/users' },
+    { 
+      icon:settings,
+      title: "Funds", nav: '/funds' },
     { 
       icon:settings,
         title: "Orders", nav: '/orders' },
@@ -22,7 +25,7 @@ const masterSidebarOptions =
   ];
 
   export {
-    masterSidebarOptions,
+    adminSidebarOptions,
   }
 
   
