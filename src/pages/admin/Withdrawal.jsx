@@ -196,7 +196,7 @@ const Withdrawal = () => {
             allowClear
             onSearch={handleSearch}
             // style={{ width: 300 }}
-            />
+          />
         </Flex>
         <Text className='font-semibold'>Total Withdrawal : <span className='text-red-600'>{totalWithdrawedAmount || 0}</span></Text>
         <div className=' w-full h-full'>

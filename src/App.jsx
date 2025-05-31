@@ -9,6 +9,7 @@ import AddFunds from './pages/admin/AddFunds'
 import SendEmail from './pages/admin/SendEmail'
 import Funds from './pages/admin/Funds'
 import Orders from './pages/admin/Orders'
+import Address from './pages/admin/Address'
 
 function App() {
   const adminToken = useSelector((state) => state.Admin?.token);
@@ -27,6 +28,7 @@ function App() {
             <Route path='orders' element={<PrivateMasterRoute element={ <Orders/> }/>}/>
             <Route path='users' element={<PrivateMasterRoute element={<Users />}/>}/>
             <Route path='funds' element={<PrivateMasterRoute element={<Funds />}/>}/>
+            <Route path='address' element={<PrivateMasterRoute element={<Address />}/>}/>
             
             {/* Extra */}
             <Route path='add-funds' element={<PrivateMasterRoute element={<AddFunds/>}/>}/>

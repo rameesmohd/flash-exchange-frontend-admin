@@ -22,6 +22,9 @@ const adminSidebarOptions =
     {  
       icon: withdrawal,      
         title: "Withdrawal", nav: '/withdrawal' },
+    {  
+      icon: withdrawal,      
+      title: "Address", nav: '/address' },
   ];
 
   export {
