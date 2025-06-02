@@ -31,25 +31,25 @@ const Deposits = () => {
     search: '',
     from: '',
     to: '',
-    status: 'approved',
+    status: 'success',
     currentPage: 1,
     pageSize: 10,
   });
 
-  const fetchAddress = async (id) => {
-    setLoadingStates((prev) => ({ ...prev, [id]: true }));
-    try {
-      const response = await adminGet(`/fetch-address?_id=${id}`);
-      if (response) {
-        setModalData(response);
-        setIsModalOpen(true);
-      }
-    } catch (error) {
-      console.log(error);
-    } finally {
-      setLoadingStates((prev) => ({ ...prev, [id]: false }));
-    }
-  };
+  // const fetchAddress = async (id) => {
+  //   setLoadingStates((prev) => ({ ...prev, [id]: true }));
+  //   try {
+  //     const response = await adminGet(`/fetch-address?_id=${id}`);
+  //     if (response) {
+  //       setModalData(response);
+  //       setIsModalOpen(true);
+  //     }
+  //   } catch (error) {
+  //     console.log(error);
+  //   } finally {
+  //     setLoadingStates((prev) => ({ ...prev, [id]: false }));
+  //   }
+  // };
 
   const getColumns = [
     {
@@ -59,13 +59,6 @@ const Deposits = () => {
         (queryObjects.currentPage - 1) * queryObjects.pageSize + index + 1,
     },
     {
-      title: 'Date',
-      dataIndex: 'createdAt',
-      key: 'createdAt',
-      render : (text)=>formatDate(text),
-      width : 120
-    },
-    {
       title: 'Transaction Id',
       dataIndex: 'transactionId',
       key: 'transactionId',
@@ -73,10 +66,24 @@ const Deposits = () => {
       width : 120
     },
     {
+      title: 'User',
+      dataIndex: 'userId',
+      key: 'userId',
+      render: (text) => <div>{text?.email}</div>,
+      width : 120
+    },
+    {
+      title: 'Date',
+      dataIndex: 'createdAt',
+      key: 'createdAt',
+      render : (text)=>formatDate(text),
+      width : 120
+    },
+    {
       title: 'Payment Mode',
       dataIndex: 'paymentMode',
       key: 'paymentMode',
-      render: (text) => <div>{`#${text}`}</div>,
+      render: (text) => <div>{`${text}`}</div>,
     },
     {
       title: 'Amount',
@@ -91,15 +98,21 @@ const Deposits = () => {
       render: (status) => getStatusTag(status),
     },
     {
-      title: 'Payment address',
+      title: 'Payment Address',
       dataIndex: 'recieveAddress',
       key: 'recieveAddress',
-      render: (_text, record) => (
-       <div>
-          <div>Priority: 1</div>
-          <div>Address: {_text}</div>
+      render: (text, record) => (
+       <div className='font-semibold' >
+          <div>Priority: { text?.priority }</div>
+          <div>Address: {text?.address}</div>
        </div>
       ),
+    },
+     {
+      title: 'Txid',
+      dataIndex: 'txid',
+      key: 'txid',
+      render: (text, record) => {`${text}`}
     },
   ];
 
@@ -113,7 +126,7 @@ const Deposits = () => {
       if (response) {
         setDeposits(response.result);
         setTotalDeposits(response.total || response.result.length);
-        setTotalDepositedAmount(response.totalDepositedAmount)
+        setTotalDepositedAmount(response?.totalDepositedAmount)
       }
     } catch (error) {
       console.error('Failed to fetch deposits:', error);
@@ -180,19 +193,18 @@ const Deposits = () => {
           <div className=' text-lg'>Deposits History</div>
         <Flex className='flex-col sm:flex-row items-center my-2' justify='space-between'>
           <div className='flex flex-col sm:flex-row items-center w-full'>
-            <Radio.Group className='mx-1 my-1 flex w-full -z-50' onChange={handleStatusChange} defaultValue='approved'>
+            <Radio.Group className='mx-1 my-1 flex w-full -z-0' onChange={handleStatusChange} defaultValue='success'>
               <Radio.Button value=''>All</Radio.Button>
               <Radio.Button value='pending'>Pending</Radio.Button>
-              <Radio.Button value='approved'>Approved</Radio.Button>
-              <Radio.Button value='rejected'>Rejected</Radio.Button>
+              <Radio.Button value='success'>Success</Radio.Button>
+              <Radio.Button value='failed'>Failed</Radio.Button>
             </Radio.Group>
-            <RangePicker className='h-8 mx-1 w-full my-1' onChange={handleDateRange} />
+            <RangePicker className='h-8 mx-1 w-full sm:w-96 my-1' onChange={handleDateRange} />
             <Search
               className='mx-1 my-1 w-full sm:w-96'
-              placeholder='email, txid, wallet id'
+              placeholder='Transaction Id'
               allowClear
               onSearch={handleSearch}
-              // style={{ width: 300 }}
             />
           </div>
           <Button type='primary' className='bg-blue-500 text-white my-2 w-full sm:w-44' onClick={() => navigate('/master/add-funds')}>Add Funds to user</Button>

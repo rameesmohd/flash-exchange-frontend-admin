@@ -28,7 +28,7 @@ const Withdrawal = () => {
       pageSize: 10,
   });
   const [totalWithdrawal, setTotalWithdrawal] = useState(0);
-    const [totalWithdrawedAmount,setTotalWithdrawedAmount]=useState(0)
+
   const handleWithdrawStatus =async({status,_id})=>{
       try {
         const response = await adminPatch('/withdrawals',{status,_id})
@@ -48,17 +48,17 @@ const Withdrawal = () => {
           render : (_text,_record,index)=>index+1
         },
         {
-          title: 'Date',
-          dataIndex: 'createdAt',
-          key: 'createdAt',
-          render : (text)=>formatDate(text),
-          width : 120
-        },
-        {
           title: 'Transaction Id',
           dataIndex: 'transactionId',
           key: 'transactionId',
           render : (text)=> <div>{`#${text}`}</div>,
+          width : 120
+        },
+        {
+          title: 'Date',
+          dataIndex: 'createdAt',
+          key: 'createdAt',
+          render : (text)=>formatDate(text),
           width : 120
         },
         {
@@ -120,7 +120,6 @@ const Withdrawal = () => {
           console.log(response);
           setWithdrawal(response.result)
           setTotalWithdrawal(response.total || response.result.length);
-          setTotalWithdrawedAmount(response.totalWithdrawedAmount)
         }
       } catch (error) {
         console.error('Failed to fetch withdrawals:', error);
@@ -183,13 +182,13 @@ const Withdrawal = () => {
         <div className='p-2 my-2'>
         <div className='text-lg'>Withdrawals History</div>
         <Flex className='flex-col sm:flex-row gap-2 my-2' justify='space-between'>
-          <Radio.Group className='mx-1 flex w-full -z-50' onChange={handleStatusChange} defaultValue='pending'>
+          <Radio.Group className='mx-1 flex w-full -z-0' onChange={handleStatusChange} defaultValue='pending'>
             <Radio.Button value=''>All</Radio.Button>
             <Radio.Button value='pending'>Pending</Radio.Button>
             <Radio.Button value='approved'>Approved</Radio.Button>
             <Radio.Button value='rejected'>Rejected</Radio.Button>
           </Radio.Group>
-          <RangePicker className='h-8 mx-1 w-full' onChange={handleDateRange} />
+          <RangePicker className='h-8 mx-1 w-full sm:w-96' onChange={handleDateRange} />
           <Search
             className='mx-1 w-full sm:w-96'
             placeholder='email, txid, wallet id'
@@ -198,7 +197,6 @@ const Withdrawal = () => {
             // style={{ width: 300 }}
           />
         </Flex>
-        <Text className='font-semibold'>Total Withdrawal : <span className='text-red-600'>{totalWithdrawedAmount || 0}</span></Text>
         <div className=' w-full h-full'>
             <Table
               scroll={{ x: "max-content" }}

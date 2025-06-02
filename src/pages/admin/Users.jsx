@@ -3,7 +3,6 @@ import { Button, Flex, Input, Modal, Space, Table, Tag,DatePicker } from 'antd';
 import { timerIcon } from '../../assets/dashboard';
 import { adminGet, adminPost } from '../../services/adminApi' 
 import { formatDate } from '../../services/formatDate';
-import { setLastRollover } from '../../redux/MasterSlice'
 import { useDispatch } from 'react-redux';
 import { useNavigate } from 'react-router-dom';
 const { Search } = Input;

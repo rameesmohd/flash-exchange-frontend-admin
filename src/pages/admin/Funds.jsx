@@ -1,24 +1,13 @@
 import React, { useEffect, useState } from 'react'
-import { Button, Flex, Input, Modal, Space, Table, Tag,DatePicker } from 'antd';
+import { Button, Flex, Input, Modal, Space, Table, Tag,DatePicker, Select, message } from 'antd';
 import { timerIcon } from '../../assets/dashboard';
-import { adminGet, adminPost } from '../../services/adminApi' 
+import { adminGet, adminPatch, adminPost } from '../../services/adminApi' 
 import { formatDate } from '../../services/formatDate';
-import { setLastRollover } from '../../redux/MasterSlice'
-import { useDispatch } from 'react-redux';
-import { useNavigate } from 'react-router-dom';
-const { Search } = Input;
-const { RangePicker } = DatePicker;
+import AddFundDrawer from '../../components/AddFundDrawer';
 
-const MyInvestments = () => {
+const Funds = () => {
   const [fundList,setFundList]=useState([])
-  const dispatch = useDispatch()
   const [loading,setLoading]=useState(false)
-  const [changeEmail,setChangeEmail]=useState({
-    show : false,
-    user_id : "",
-    newEmail : "",
-    loading : false
-  })
   const [queryObjects, setQueryObjects] = useState({
     search: '',
     from: '',
@@ -26,8 +15,27 @@ const MyInvestments = () => {
     currentPage: 1,
     pageSize: 10,
   });
-  const [totalDeposits, setTotalDeposits] = useState(0);
-  const navigate = useNavigate()
+  const [totalFunds, setTotalFunds] = useState(0);
+  const [editingRecord, setEditingRecord] = useState(null);
+  const [spin,setSpin]=useState(false)
+  
+  const handleStatusChange = async (newStatus, record) => {
+    try {
+      setSpin(true)
+      const response = await adminPatch(`/fund/${record._id}/update-status`, { status: newStatus });
+      if(response.success){
+        message.success('Status updated');
+        fetchFunds(); 
+      }
+    } catch (err) {
+      message.error('Failed to update status');
+      console.error(err);
+    } finally {
+      setSpin(false)  
+    }
+  };
+
+
   const columns = [
     {
       title: <span className='text-gray-500 font-normal'>No.</span>,
@@ -38,7 +46,7 @@ const MyInvestments = () => {
       title:  <span className='text-gray-500 font-normal'>Type </span>,
       dataIndex: 'type',
       key: 'type',
-      render: (text,record) => <a className='text-blue-600 cursor-pointer' onClick={(e)=>setChangeEmail((prev)=>({...prev,show : true,user_id : record._id}))}>{text}</a>,
+      render: (text,record) => <a className='text-blue-600 cursor-pointer'>{text}</a>,
       width : 120
     },
     {
@@ -57,26 +65,59 @@ const MyInvestments = () => {
       render : (text)=> <a href="">{`$${Math.floor(text).toFixed(2)}`}</a>
     },
     {
-      title:<span className='text-gray-500 font-normal'>Status</span>,
-      dataIndex: 'status',
-      key: 'status',
-      render : (text)=><div className='capitalize'>{text}</div>
+      title:<span className='text-gray-500 font-normal'>Proccessing Amount</span>,
+      dataIndex: 'paymentMode',
+      key: 'paymentMode',
+      render : (text)=> <div className='capitalize'>{text}</div>
     },
     {
-      title:<span className='text-gray-500 font-normal'>Max Fullfilment</span>,
+      title: <span className='text-gray-500 font-normal'>Status</span>,
+      dataIndex: 'status',
+      key: 'status',
+      render: (text, record) => (
+        <Select
+          className='border rounded-lg border-double'
+          loading={spin}
+          value={text} 
+          style={{ width: 120 ,borderWidth : 4, borderColor : `${text === 'active' ? "green" : text === 'inactive' ? "red" : "orange"}`}}
+          onChange={(value) => handleStatusChange(value, record)} 
+          options={[
+            { value: 'active', label: 'Active', disabled: text === 'active' },
+            { value: 'inactive', label: 'Inactive', disabled: text === 'inactive' },
+            { value: 'stockout', label: 'Stockout', disabled: text === 'stockout' },
+          ]}
+        />
+      )
+    },
+    {
+      title:<span className='text-gray-500 font-normal'>Max Fullfilment (Hr)</span>,
       dataIndex: 'maxFulfillmentTime',
       key: 'maxFulfillmentTime',
       render : (text)=> <a href="">{`${Number(text).toFixed(2)} Hours`}</a>
     },
+    {
+      title:  <span className='text-gray-500 font-normal'>Tele Channel </span>,
+      dataIndex: 'teleChannel',
+      key: 'teleChannel',
+    },
+    {
+      title: 'Action',
+      key: 'action',
+      render: (_text, record) => (
+        <Button type="link" onClick={() => setEditingRecord(record)}>
+          Edit
+        </Button>
+      ),
+    }
   ];
 
-  const fetchUsers=async()=>{
+  const fetchFunds=async()=>{
     setLoading(true)
     try {
-      const response = await adminGet(`/funds`)
+      const response = await adminGet(`/fund`)
       if(response){
        setFundList(response.funds)
-       console.log(fundList , 'fundList')
+       setTotalFunds(response.funds ? response.funds.length : 0)
       }
     } catch (error) {
       console.log(error);
@@ -86,53 +127,19 @@ const MyInvestments = () => {
   }
 
   useEffect(()=>{
-    fetchUsers()
+    fetchFunds()
   },[queryObjects])
-
-  const handleSearch = (value) => {
-    setQueryObjects((prev) => ({
-      ...prev,
-      search: value,
-      currentPage: 1,
-    }));
-  };
-
-  const handleDateRange = (dates) => {
-    if (!dates) {
-      setQueryObjects((prev) => ({ ...prev, from: '', to: '' }));
-    } else {
-      const [start, end] = dates;
-      
-      // Convert both to start and end of day in UTC
-      const utcStart = new Date(Date.UTC(
-        start.year(),
-        start.month(),
-        start.date(),
-        0, 0, 0
-      ));
-  
-      const utcEnd = new Date(Date.UTC(
-        end.year(),
-        end.month(),
-        end.date(),
-        23, 59, 59, 999
-      ));
-  
-      setQueryObjects((prev) => ({
-        ...prev,
-        from: utcStart.toISOString(),
-        to: utcEnd.toISOString(),
-        currentPage: 1,
-      }));
-    }
-  };
 
   return (
     <>
     <div className='sm:p-6'>
       <Flex justify='space-between' align='center'>
       <div className='text-2xl  font-bold my-3'>Funds</div>
-      <Button>Add Fund</Button>
+      <AddFundDrawer
+        editingRecord={editingRecord}
+        onCloseDrawer={() => setEditingRecord(null)}
+        onSuccess={fetchFunds}
+      />
       </Flex>
       <Table
         loading={loading}
@@ -143,7 +150,7 @@ const MyInvestments = () => {
         pagination={{
           current: queryObjects.currentPage,
           pageSize: queryObjects.pageSize,
-          total: totalDeposits,
+          total: totalFunds,
           showSizeChanger: true,
           pageSizeOptions: ['10', '20', '50'],
           showTotal: (total) => `Total ${total} items`,
@@ -160,4 +167,4 @@ const MyInvestments = () => {
   )
 }
 
-export default MyInvestments
+export default Funds

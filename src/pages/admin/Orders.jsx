@@ -11,11 +11,19 @@ const { Text } = Typography
 const getStatusTag = (status) => {
   const statusColors = {
     pending: 'orange',
-    approved: 'green',
-    rejected: 'red',
+    stockout: "orange",
+
+    dispute: 'blue',
+
+    success: 'green',
+    active : 'green',
+
+    inactive : 'red',
+    failed: 'red',
+
   };
 
-  return <Tag color={statusColors[status]}>{status.toUpperCase()}</Tag>;
+  return <Tag className='text-xs' color={statusColors[status]}>{status.toUpperCase()}</Tag>;
 };
 
 const Orders = () => {
@@ -29,16 +37,25 @@ const Orders = () => {
   });
   const [totalOrders, setTotalOrders] = useState(0);
   const [totalCompletedAmount,setTotalCompletedAmount]=useState(0)
+  const [loaders,setLoaders]=useState({
+    table : false,
+    approve : false,
+    reject : false
+  })
 
-  const handleWithdrawStatus =async({status,_id})=>{
-      try {
-        const response = await adminPatch('/orders',{status,_id})
-        if(response){
-          fetchWithdrawal()
-        }
-      } catch (error) {
-          console.log(error);
+  const handleStatus =async({status,id})=>{
+    const key = status=="success" ? "approve" : "reject"
+    try {
+      setLoading((prev)=>({...prev,[key] : true}))
+      const response = await adminPatch('/orders',{status,id})
+      if(response && response.success){
+        fetchOrders()
       }
+    } catch (error) {
+        console.log(error);
+    } finally {
+      setLoading((prev)=>({...prev,[key] : false}))
+    }
   }
 
   const getColumns = (data) => {
@@ -56,13 +73,19 @@ const Orders = () => {
           width : 120
         },
         {
-          title: 'order ID',
+          title: 'Order Id',
           dataIndex: 'orderId',
           key: 'orderId',
           render : (text)=> <div>{`#${text}`}</div>
         },
         {
-          title: 'USDT',
+          title: 'User',
+          dataIndex: 'userId',
+          key: 'userId',
+          render : (text)=> <div>{`${text.email}`}</div>
+        },
+        {
+          title: 'Usdt',
           dataIndex: 'usdt',
           key: 'usdt',
           render : (text)=> <div>{text} USDT</div>
@@ -71,22 +94,33 @@ const Orders = () => {
           title : "Fiat",
           dataIndex : "fiat",
           key : "fiat",
-          render : (text)=> <div>{`${text} INR`}</div>
+          render : (text)=> <div>{`₹${text}`}</div>
         },
         {
           title: 'Fund',
           dataIndex: 'fund',
           key: 'fund',
-          render : (text)=> <div>{`xxx`}</div>
+          render : (text,record)=> <Card bodyStyle={{padding : 4,paddingLeft : 12}} className='capitalize text-xs w-52'>
+            <Flex justify='space-between' className='w-full'>
+            <div className='font-semibold'>
+            <div>Type: {text.type}</div>  
+              <div>Rate: ₹{text.rate}</div>
+              <div>Channel: {text?.teleChannel}</div>
+            </div>
+            <div>
+              {text.status&&  getStatusTag(text.status)}
+            </div>
+            </Flex>
+          </Card>,
         },
         {
           title: 'Bank Card',
           dataIndex: 'bankCard',
           key: 'bankCard',
-          render : (text)=> <Card bodyStyle={{padding : 4,paddingLeft : 12}} className='capitalize '>
-            <div>Acc No: {text.accountNumber}</div>  
-            <div>IFSC: {text.ifsc}</div>
-            <div>Acc Name: {text.accountName}</div>
+          render : (text)=> <Card bodyStyle={{padding : 4,paddingLeft : 12}} className='capitalize text-xs font-semibold'>
+            <div>Acc No: {text?.accountNumber}</div>  
+            <div>IFSC: {text?.ifsc}</div>
+            <div>Name: {text?.accountName}</div>
           </Card>,
           width : 200
         },
@@ -101,11 +135,10 @@ const Orders = () => {
           key : '_id',
           render : (text,render)=> <div className='flex'>
               {
-                render.status=='pending' ? 
               <>
-                <Button onClick={()=>handleWithdrawStatus({status : 'approved',_id : render._id})} className='bg-green-500 text-white mx-2'>Approve</Button> 
-                <Button onClick={()=>handleWithdrawStatus({status : 'rejected',_id : render._id})}ssName='bg-red-500 text-white'>Reject</Button>
-              </> : ""
+                <Button size='small' loading={loading.approve} onClick={()=>handleStatus({status : 'success',id : render._id})} className='bg-green-500 text-white mx-2'>Approve</Button> 
+                <Button size='small' loading={loading.reject} onClick={()=>handleStatus({status : 'failed',id : render._id})} className='bg-red-500 text-white'>Reject</Button>
+              </> 
               }
           </div>
         },
@@ -116,7 +149,7 @@ const Orders = () => {
   const [ loading,setLoading ]=useState(false)
 
   const fetchOrders =async()=>{
-      setLoading(true)
+      setLoading((prev)=>({...prev,table : true}))
       try {
         const { search, from, to, status, currentPage, pageSize } = queryObjects;
         const response = await adminGet(
@@ -125,13 +158,15 @@ const Orders = () => {
         if(response){
           console.log(response);
           setOrders(response.orders)
-          setTotalOrders(response.total || response.result.length);
+          setTotalOrders(response.total || response.orders.length);
           setTotalCompletedAmount(response.totalCompletedAmount)
         }
       } catch (error) {
         console.error('Failed to fetch Orderss:', error);
+      } finally {
+        setLoading((prev)=>({...prev,table : false}))
       }
-      setLoading(false)
+      
   }
 
   useEffect(()=>{
@@ -189,16 +224,16 @@ const Orders = () => {
         <div className='p-2 my-2'>
         <div className='text-lg mb-2'>Orders History</div>
         <Flex className='flex-col sm:flex-row my-3 items-center' gap={6} justify='space-between'>
-          <Radio.Group className='mx-1 w-full flex -z-50' onChange={handleStatusChange} defaultValue='pending'>
+          <Radio.Group className='mx-1 w-full flex -z-0' onChange={handleStatusChange} defaultValue='pending'>
             <Radio.Button value=''>All</Radio.Button>
             <Radio.Button value='pending'>Pending</Radio.Button>
-            <Radio.Button value='approved'>Approved</Radio.Button>
-            <Radio.Button value='rejected'>Rejected</Radio.Button>
+            <Radio.Button value='success'>Success</Radio.Button>
+            <Radio.Button value='failed'>Failed</Radio.Button>
           </Radio.Group>
-          <RangePicker className='h-8 mx-1 w-full' onChange={handleDateRange} />
+          <RangePicker className='h-8 mx-1 w-full sm:w-96' onChange={handleDateRange} />
           <Search
             className='mx-1 w-full sm:w-96'
-            placeholder='email, txid, wallet id'
+            placeholder='Order Id'
             allowClear
             onSearch={handleSearch}
             // style={{ width: 300 }}
@@ -208,7 +243,7 @@ const Orders = () => {
         <div className=' w-full h-full'>
             <Table
               scroll={{ x: "max-content" }}
-              loading={loading} 
+              loading={loading.table} 
               columns={getColumns(Orders)} 
               dataSource={Orders}
               rowKey="_id"
