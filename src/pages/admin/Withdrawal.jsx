@@ -1,6 +1,7 @@
 import { Button, DatePicker, Input, Table,Radio, Flex ,Typography} from 'antd';
 import React, { useEffect, useState } from 'react'
 import {formatDate } from '../../services/formatDate'
+import ConfirmModal from '../../components/common/ConfirmModal'
 import { adminGet, adminPatch } from '../../services/adminApi';
 import { Tag } from 'antd';
 
@@ -19,26 +20,44 @@ const getStatusTag = (status) => {
 };
 
 const Withdrawal = () => {
-    const [queryObjects, setQueryObjects] = useState({
+  const [totalWithdrawal, setTotalWithdrawal] = useState(0);
+  const [queryObjects, setQueryObjects] = useState({
       search: '',
       from: '',
       to: '',
       status: 'pending',
       currentPage: 1,
       pageSize: 10,
+    });
+  const [ withdrawal,setWithdrawal ]= useState([])
+  const [ loading,setLoading ]=useState({
+    table : false,
+    success : false,
+    failed : false
+  })
+  
+  const [modalState, setModalState] = useState({
+    visible: false,
+    type: '', // 'approve' or 'reject'
+    data: null, // selected withdrawal object
   });
-  const [totalWithdrawal, setTotalWithdrawal] = useState(0);
 
-  const handleWithdrawStatus =async({status,_id})=>{
-      try {
-        const response = await adminPatch('/withdrawals',{status,_id})
-        if(response){
-          fetchWithdrawal()
-        }
-      } catch (error) {
-          console.log(error);
-      }
-  }
+
+  const handleConfirm = async () => {
+    const { type, data } = modalState;
+    const status = type === 'approve' ? 'success' : 'failed';
+
+    try {
+      setLoading((prev) => ({ ...prev, [status]: true }));
+      await adminPatch('/withdrawals', { status, id: data._id });
+      fetchWithdrawal(); // refresh
+    } catch (error) {
+      console.error(error);
+    } finally {
+      setLoading((prev) => ({ ...prev, [status]: false }));
+      setModalState({ visible: false, type: '', data: null });
+    }
+  };
 
   const getColumns = (data) => {
       const columns = [
@@ -65,6 +84,7 @@ const Withdrawal = () => {
           title: 'User Id',
           dataIndex: 'userId',
           key: 'userId',
+          render: (text) => <div>{text?.email}</div>,
         },
         {
           title: 'Amount',
@@ -84,10 +104,16 @@ const Withdrawal = () => {
           key: 'status',
           render: (status) => getStatusTag(status),
         },
-          {
-          title : "Recieve Address",
-          dataIndex : "recieveAddress",
-          key : "recieveAddress",
+        {
+          title : "Receive Address",
+          dataIndex : "receiveAddress",
+          key : "receiveAddress",
+          render : (text)=> <div>{`${text}`}</div>
+        },
+        {
+          title : "Txid",
+          dataIndex : "txid",
+          key : "txid",
           render : (text)=> <div>{`${text}`}</div>
         },
         { 
@@ -97,34 +123,51 @@ const Withdrawal = () => {
               {
                 render.status=='pending' ? 
               <>
-                <Button onClick={()=>handleWithdrawStatus({status : 'approved',_id : render._id})} className='bg-green-500 text-white'>Approve</Button> 
-                <Button onClick={()=>handleWithdrawStatus({status : 'rejected',_id : render._id})}ssName='bg-red-500 text-white'>Reject</Button>
+                <Button
+                  loading={loading.success}
+                  onClick={() =>
+                    setModalState({ visible: true, type: 'approve', data: render })
+                  }
+                  className='bg-green-500 text-white'
+                >
+                  Approve
+                </Button>
+
+                <Button
+                  loading={loading.failed}
+                  onClick={() =>
+                    setModalState({ visible: true, type: 'reject', data: render })
+                  }
+                  className='bg-red-500 text-white'
+                >
+                  Reject
+                </Button>
               </> : ""
               }
           </div>
         },
       ];
       return columns;
-    };
-  const [ withdrawal,setWithdrawal ]= useState([])
-  const [ loading,setLoading ]=useState(false)
+  };
+    
 
   const fetchWithdrawal =async()=>{
-      setLoading(true)
-      try {
-        const { search, from, to, status, currentPage, pageSize } = queryObjects;
-        const response = await adminGet(
-          `/withdrawals?search=${search}&from=${from}&to=${to}&status=${status}&currentPage=${currentPage}&pageSize=${pageSize}`
-        )
-        if(response){
-          console.log(response);
-          setWithdrawal(response.result)
-          setTotalWithdrawal(response.total || response.result.length);
-        }
-      } catch (error) {
-        console.error('Failed to fetch withdrawals:', error);
+    try {
+      setLoading((prev)=>({...prev,table : true}))
+      const { search, from, to, status, currentPage, pageSize } = queryObjects;
+      const response = await adminGet(
+        `/withdrawals?search=${search}&from=${from}&to=${to}&status=${status}&currentPage=${currentPage}&pageSize=${pageSize}`
+      )
+      if(response){
+        console.log(response);
+        setWithdrawal(response.result)
+        setTotalWithdrawal(response.total || response.result.length);
       }
-      setLoading(false)
+    } catch (error) {
+      console.error('Failed to fetch withdrawals:', error);
+    } finally {
+      setLoading((prev)=>({...prev,table : false}))
+    }
   }
 
   useEffect(()=>{
@@ -185,42 +228,50 @@ const Withdrawal = () => {
           <Radio.Group className='mx-1 flex w-full -z-0' onChange={handleStatusChange} defaultValue='pending'>
             <Radio.Button value=''>All</Radio.Button>
             <Radio.Button value='pending'>Pending</Radio.Button>
-            <Radio.Button value='approved'>Approved</Radio.Button>
-            <Radio.Button value='rejected'>Rejected</Radio.Button>
+            <Radio.Button value='success'>Approved</Radio.Button>
+            <Radio.Button value='failed'>Rejected</Radio.Button>
           </Radio.Group>
           <RangePicker className='h-8 mx-1 w-full sm:w-96' onChange={handleDateRange} />
           <Search
             className='mx-1 w-full sm:w-96'
-            placeholder='email, txid, wallet id'
+            placeholder='Transaction Id'
             allowClear
             onSearch={handleSearch}
-            // style={{ width: 300 }}
           />
         </Flex>
         <div className=' w-full h-full'>
-            <Table
-              scroll={{ x: "max-content" }}
-              loading={loading} 
-              columns={getColumns(withdrawal)} 
-              dataSource={withdrawal} 
-              rowKey="_id"
-              pagination={{
-                current: queryObjects.currentPage,
-                pageSize: queryObjects.pageSize,
-                total: totalWithdrawal,
-                showSizeChanger: true,
-                pageSizeOptions: ['10', '20', '50'],
-                showTotal: (total) => `Total ${total} items`,
-                onChange: (page, pageSize) =>
-                  setQueryObjects((prev) => ({
-                    ...prev,
-                    currentPage: page,
-                    pageSize: pageSize,
-                  })),
-              }}
-            />
+        <Table
+          scroll={{ x: "max-content" }}
+          loading={loading.table} 
+          columns={getColumns(withdrawal)} 
+          dataSource={withdrawal} 
+          rowKey="_id"
+          pagination={{
+            current: queryObjects.currentPage,
+            pageSize: queryObjects.pageSize,
+            total: totalWithdrawal,
+            showSizeChanger: true,
+            pageSizeOptions: ['10', '20', '50'],
+            showTotal: (total) => `Total ${total} items`,
+            onChange: (page, pageSize) =>
+              setQueryObjects((prev) => ({
+                ...prev,
+                currentPage: page,
+                pageSize: pageSize,
+              })),
+          }}
+        />
         </div>
         </div>
+
+    <ConfirmModal
+      visible={modalState.visible}
+      onConfirm={handleConfirm}
+      onCancel={() => setModalState({ visible: false, type: '', data: null })}
+      loading={loading[modalState.type === 'approve' ? 'success' : 'failed']}
+      title={`Confirm ${modalState.type === 'approve' ? 'Approve' : 'Reject'}`}
+      content={`Are you sure you want to ${modalState.type === 'approve' ? 'approve' : 'reject'} this withdrawal? This action cannot be undone.`}
+    />
     </>
   )
 }

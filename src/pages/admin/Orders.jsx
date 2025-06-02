@@ -3,6 +3,7 @@ import React, { useEffect, useState } from 'react'
 import {formatDate } from '../../services/formatDate'
 import { adminGet, adminPatch } from '../../services/adminApi';
 import { Tag } from 'antd';
+import ConfirmModal from '../../components/common/ConfirmModal';
 
 const { RangePicker } = DatePicker;
 const { Search } = Input;
@@ -27,7 +28,7 @@ const getStatusTag = (status) => {
 };
 
 const Orders = () => {
-    const [queryObjects, setQueryObjects] = useState({
+  const [queryObjects, setQueryObjects] = useState({
       search: '',
       from: '',
       to: '',
@@ -37,24 +38,32 @@ const Orders = () => {
   });
   const [totalOrders, setTotalOrders] = useState(0);
   const [totalCompletedAmount,setTotalCompletedAmount]=useState(0)
-  const [loaders,setLoaders]=useState({
+  const [ loading,setLoading ]=useState({
     table : false,
-    approve : false,
-    reject : false
+    success : false,
+    failed : false
   })
 
-  const handleStatus =async({status,id})=>{
-    const key = status=="success" ? "approve" : "reject"
+  const [modalState, setModalState] = useState({
+    visible: false,
+    type: '', // 'approve' or 'reject'
+    data: null, // selected withdrawal object
+  });
+
+  const handleConfirm =async()=>{
+    const { type, data } = modalState;
+    const status = type === 'approve' ? 'success' : 'failed';
     try {
-      setLoading((prev)=>({...prev,[key] : true}))
-      const response = await adminPatch('/orders',{status,id})
+      setLoading((prev)=>({...prev,[status] : true}))
+      const response = await adminPatch('/orders',{status,id : data._id})
       if(response && response.success){
         fetchOrders()
       }
     } catch (error) {
         console.log(error);
     } finally {
-      setLoading((prev)=>({...prev,[key] : false}))
+      setLoading((prev)=>({...prev,[status] : false}))
+      setModalState({ visible: false, type: '', data: null });
     }
   }
 
@@ -82,7 +91,7 @@ const Orders = () => {
           title: 'User',
           dataIndex: 'userId',
           key: 'userId',
-          render : (text)=> <div>{`${text.email}`}</div>
+          render : (text)=> <div>{`${text?.email}`}</div>
         },
         {
           title: 'Usdt',
@@ -103,8 +112,8 @@ const Orders = () => {
           render : (text,record)=> <Card bodyStyle={{padding : 4,paddingLeft : 12}} className='capitalize text-xs w-52'>
             <Flex justify='space-between' className='w-full'>
             <div className='font-semibold'>
-            <div>Type: {text.type}</div>  
-              <div>Rate: ₹{text.rate}</div>
+            <div>Type: {text?.type}</div>  
+              <div>Rate: ₹{text?.rate}</div>
               <div>Channel: {text?.teleChannel}</div>
             </div>
             <div>
@@ -136,8 +145,25 @@ const Orders = () => {
           render : (text,render)=> <div className='flex'>
               {
               <>
-                <Button size='small' loading={loading.approve} onClick={()=>handleStatus({status : 'success',id : render._id})} className='bg-green-500 text-white mx-2'>Approve</Button> 
-                <Button size='small' loading={loading.reject} onClick={()=>handleStatus({status : 'failed',id : render._id})} className='bg-red-500 text-white'>Reject</Button>
+                 <Button
+                    loading={loading.success}
+                    onClick={() =>
+                      setModalState({ visible: true, type: 'approve', data: render })
+                    }
+                    className='bg-green-500 text-white'
+                  >
+                    Approve
+                  </Button>
+
+                  <Button
+                    loading={loading.failed}
+                    onClick={() =>
+                      setModalState({ visible: true, type: 'reject', data: render })
+                    }
+                    className='bg-red-500 text-white'
+                  >
+                    Reject
+                  </Button>
               </> 
               }
           </div>
@@ -146,7 +172,6 @@ const Orders = () => {
       return columns;
     };
   const [ Orders,setOrders ]= useState([])
-  const [ loading,setLoading ]=useState(false)
 
   const fetchOrders =async()=>{
       setLoading((prev)=>({...prev,table : true}))
@@ -264,6 +289,15 @@ const Orders = () => {
             />
         </div>
         </div>
+
+        <ConfirmModal
+          visible={modalState.visible}
+          onConfirm={handleConfirm}
+          onCancel={() => setModalState({ visible: false, type: '', data: null })}
+          loading={loading[modalState.type === 'approve' ? 'success' : 'failed']}
+          title={`Confirm ${modalState.type === 'approve' ? 'Approve' : 'Reject'}`}
+          content={`Are you sure you want to ${modalState.type === 'approve' ? 'approve' : 'reject'} this withdrawal? This action cannot be undone.`}
+        />
     </>
   )
 }

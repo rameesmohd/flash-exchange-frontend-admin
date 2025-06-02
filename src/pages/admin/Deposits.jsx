@@ -18,11 +18,8 @@ const getStatusTag = (status) => {
 };
 
 const Deposits = () => {
-  const [isModalOpen, setIsModalOpen] = useState(false);
-  const [modalData, setModalData] = useState({});
   const [deposits, setDeposits] = useState([]);
   const [loading, setLoading] = useState(false);
-  const [loadingStates, setLoadingStates] = useState({});
   const [totalDeposits, setTotalDeposits] = useState(0);
   const [totalDepositedAmount,setTotalDepositedAmount]=useState(0)
   const navigate = useNavigate();
@@ -35,21 +32,6 @@ const Deposits = () => {
     currentPage: 1,
     pageSize: 10,
   });
-
-  // const fetchAddress = async (id) => {
-  //   setLoadingStates((prev) => ({ ...prev, [id]: true }));
-  //   try {
-  //     const response = await adminGet(`/fetch-address?_id=${id}`);
-  //     if (response) {
-  //       setModalData(response);
-  //       setIsModalOpen(true);
-  //     }
-  //   } catch (error) {
-  //     console.log(error);
-  //   } finally {
-  //     setLoadingStates((prev) => ({ ...prev, [id]: false }));
-  //   }
-  // };
 
   const getColumns = [
     {
@@ -112,7 +94,7 @@ const Deposits = () => {
       title: 'Txid',
       dataIndex: 'txid',
       key: 'txid',
-      render: (text, record) => {`${text}`}
+      render : (text)=> <div>{`${text}`}</div>
     },
   ];
 
