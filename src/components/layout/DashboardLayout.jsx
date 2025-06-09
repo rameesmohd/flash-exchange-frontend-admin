@@ -127,7 +127,7 @@ export default function App({role}) {
             <span className="self-center text-xl font-semibold whitespace-nowrap text-blue-800">
               <img src={logo} alt="" className="h-6 w-6" />
             </span>
-            <div className='text-lg capitalize'>E Value Admin</div>
+            <div className='text-lg capitalize'>Admin Panel</div>
           </Link>
             
            <Button onClick={()=>logoutUser()} icon={<LogoutOutlined />} className="text-red-500 border p-1 rounded-md text-sm cursor-pointer">Logout</Button>
