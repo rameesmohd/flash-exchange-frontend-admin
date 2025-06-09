@@ -127,9 +127,16 @@ const Orders = () => {
           dataIndex: 'bankCard',
           key: 'bankCard',
           render : (text)=> <Card bodyStyle={{padding : 4,paddingLeft : 12}} className='capitalize text-xs font-semibold'>
-            <div>Acc No: {text?.accountNumber}</div>  
-            <div>IFSC: {text?.ifsc}</div>
-            <div>Name: {text?.accountName}</div>
+            {text.mode=="bank" &&
+            <>
+              <div>Acc No: {text?.accountNumber}</div>  
+              <div>IFSC: {text?.ifsc}</div>
+              <div>Name: {text?.accountName}</div>
+            </> }
+            {text.mode=="upi" &&
+            <>
+              <div>UPI: {text?.upi}</div>  
+            </> }
           </Card>,
           width : 200
         },

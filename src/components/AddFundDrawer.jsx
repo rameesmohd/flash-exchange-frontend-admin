@@ -125,9 +125,9 @@ const AddFundDrawer = ({ editingRecord = null, onCloseDrawer, onSuccess }) => {
             <Col span={12}>
               <Form.Item
                 name="teleChannel"
-                label="Telegram Channel"
+                label="Telegram Channel Id"
               >
-                <Input placeholder="@channelname" />
+                <Input placeholder="-100....." />
               </Form.Item>
             </Col>
           </Row>
