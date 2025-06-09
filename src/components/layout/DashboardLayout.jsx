@@ -1,14 +1,12 @@
 import React, { useRef, useState } from 'react';
-import { Badge, Drawer, Switch, theme } from 'antd';
+import { Badge, Button, Drawer, theme } from 'antd';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { Outlet } from 'react-router-dom'
-import { AppstoreOutlined, BellOutlined, LogoutOutlined, MenuOutlined, SettingOutlined } from '@ant-design/icons';
+import { BellOutlined, LogoutOutlined, MenuOutlined } from '@ant-design/icons';
 import logo from '../../assets/logo.png'
 import { adminSidebarOptions } from '../../content/dashboard/sidebar';
 import { notification as notificationIcon, profile as profileIcon,wallet as walletIcon } from '../../assets/dashboard'
-import { useSelector } from 'react-redux';
-import {formatDate} from '../../services/formatDate'
-import UTCClock from '../common/UTCClock';
+import { logoutUser } from '../../services/adminApi';
 
 const items = [
   {
@@ -102,7 +100,6 @@ export default function App({role}) {
   const navigate = useNavigate();
   const { token } = theme.useToken();
   const containerRef = useRef(null); 
-  const { lastRollover }=useSelector((state)=>state.Master)
 
 
   const showDrawer = () => setOpen(!open);
@@ -127,16 +124,14 @@ export default function App({role}) {
 
           {/* Logo */}
           <Link to={'#'} className="flex px-3 items-center space-x-3 rtl:space-x-reverse">
-            {/* <span className="self-center text-xl font-semibold whitespace-nowrap text-blue-800">
+            <span className="self-center text-xl font-semibold whitespace-nowrap text-blue-800">
               <img src={logo} alt="" className="h-6 w-6" />
-            </span> */}
+            </span>
             <div className='text-lg capitalize'>E Value Admin</div>
           </Link>
             
-          {/* <div className='text-xs text-right hidden sm:block'>
-          <UTCClock/>
-          </div> */}
-          
+           <Button onClick={()=>logoutUser()} icon={<LogoutOutlined />} className="text-red-500 border p-1 rounded-md text-sm cursor-pointer">Logout</Button>
+
         </div>
       </nav>
 

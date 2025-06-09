@@ -1,19 +1,15 @@
 import { configureStore  } from '@reduxjs/toolkit';
-import masterReducer from './MasterSlice';
-
+import adminReducer from './AdminSlice';
 import { persistStore, persistReducer } from 'redux-persist';
 import storage from 'redux-persist/lib/storage';
 import { FLUSH, REHYDRATE, PAUSE, PERSIST, PURGE, REGISTER } from 'redux-persist';
 
-// const persistConfig = { key: 'Manager', storage, version: 1};
-// const persistedReducer = persistReducer(persistConfig, managerReducer);
-
-const masterPersistConfig = { key: 'Master', storage, version: 1};
-const masterPersistedReducer = persistReducer(masterPersistConfig, masterReducer);
+const adminPersistConfig = { key: 'Admin', storage, version: 1};
+const adminPersistedReducer = persistReducer(adminPersistConfig, adminReducer);
 
 export const store = configureStore({
   reducer: {
-     Master : masterPersistedReducer
+     Admin : adminPersistedReducer
   },
   middleware: (getDefaultMiddleware) => 
     getDefaultMiddleware({

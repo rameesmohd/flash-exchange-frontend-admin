@@ -1,45 +1,9 @@
 import { message } from 'antd';
 import adminAxios from '../axios/adminAxios'
-import { masterLogout } from '../redux/MasterSlice';
+import { adminLogout } from '../redux/AdminSlice';
 import { jwtDecode } from 'jwt-decode';
 import { store } from '../redux/Store';
 const axiosInstance = adminAxios()
-
-const getToken = () => {
-    const storedUser = localStorage.getItem("persist:Master");
-    if (!storedUser) return null;
-  
-    try {
-      const user = JSON.parse(storedUser);
-  
-      // Check if the token is valid and not the string "null"
-      if (user.token && user.token !== "null") {
-        const token = user.token.slice(1, -1); // Assuming the token is wrapped in quotes
-        if (token !== "null") return token;
-      }
-  
-      // If any condition above fails, return null
-      return null;
-    } catch (error) {
-      console.error("Error parsing adminAuth from localStorage:", error);
-      return null; // Return null if parsing fails
-    }
-  };
-
-// Helper function to check if the token is expired
-const isTokenExpired = (token) => {
-    if (!token) return true; // If no token, consider it expired
-    try {
-      const decoded = jwtDecode(token);
-      const currentTime = Date.now() / 1000; // convert to seconds
-      console.log(decoded.exp, currentTime);
-  
-      return decoded.exp < currentTime;
-    } catch (error) {
-      console.error("Error decoding token:", error);
-      return true; // Consider token expired if decoding fails
-    }
-  };
 
 // Generic function to handle responses
 const handleResponse = (response) => {
@@ -75,10 +39,10 @@ const handleError = (error) => {
     const status = error.response?.status;
     const errMsg = error.response?.data?.errMsg || getErrorMessage(status);
   
-    if (error.response?.timeout) {
-      logoutUser(); // Use the logout function if the status is 401
+    if (status === 401) {
+      logoutUser(); // Correctly logout on unauthorized
     } else {
-      message.error(errMsg);
+      console.log(errMsg);
     }
   
     return Promise.reject(error);
@@ -87,14 +51,7 @@ const handleError = (error) => {
 
 const adminGet = async (url, options = {}) => {
     try {
-      const token = getToken();
-      if (token && isTokenExpired(token)) {
-        message.error("Session expired. Please log in again.");
-        logoutUser();
-        return;
-      }
-  
-      const headers = token ? { Authorization: `Bearer ${token}` } : {};
+      const headers = {};
       const response = await axiosInstance.get(url, {
         ...options,
         headers: { ...headers, ...(options.headers || {}) },
@@ -107,14 +64,8 @@ const adminGet = async (url, options = {}) => {
   
 const adminPost = async (url, formData) => {
     try {
-      const token = getToken();
-      if (token && isTokenExpired(token)) {
-        message.error("Session expired. Please log in again.");
-        logoutUser();
-        return;
-      }
   
-      const headers = token ? { Authorization: `Bearer ${token}` } : {};
+      const headers = {};
       const response = await axiosInstance.post(url, formData, { headers });
       return handleResponse(response);
     } catch (error) {
@@ -124,15 +75,8 @@ const adminPost = async (url, formData) => {
 
 const adminPatch = async (url, formData, img) => {
     try {
-      const token = getToken();
-      if (token && isTokenExpired(token)) {
-        message.error("Session expired. Please log in again.");
-        logoutUser();
-        return;
-      }
   
       const headers = {
-        Authorization: `Bearer ${token}`,
         "Content-Type": img ? "multipart/form-data" : "application/json",
       };
       const response = await axiosInstance.patch(url, formData, { headers });
@@ -144,14 +88,8 @@ const adminPatch = async (url, formData, img) => {
   
 const adminDelete = async (url) => {
     try {
-      const token = getToken();
-      if (token && isTokenExpired(token)) {
-        message.error("Session expired. Please log in again.");
-        logoutUser();
-        return;
-      }
   
-      const headers = token ? { Authorization: `Bearer ${token}` } : {};
+      const headers = {};
       const response = await axiosInstance.delete(url, { headers });
       return handleResponse(response);
     } catch (error) {
@@ -160,15 +98,18 @@ const adminDelete = async (url) => {
   };
   
 //   // Custom logout function for user
-  const logoutUser = () => {
-    store.dispatch(adminLogout());
-    localStorage.removeItem("persist:admin");
-    window.location.href = "/admin/login"; // Uncomment if redirection is needed
-  };
+const logoutUser = async() => {
+    try {      
+      store.dispatch(adminLogout());
+    } catch (error) {
+      console.log(error);
+    }
+};
 
 export { 
     adminGet,
     adminPost,
     adminPatch,
-    adminDelete
+    adminDelete,
+    logoutUser
 }

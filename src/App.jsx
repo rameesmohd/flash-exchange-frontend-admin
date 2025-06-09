@@ -10,11 +10,12 @@ import SendEmail from './pages/admin/SendEmail'
 import Funds from './pages/admin/Funds'
 import Orders from './pages/admin/Orders'
 import Address from './pages/admin/Address'
+import 'antd/dist/reset.css';
 
 function App() {
-  const adminToken = useSelector((state) => state.Admin?.token);
+  const adminAuth = useSelector((state) => state.Admin?.isAuthenticated);
   const PrivateMasterRoute = ({ element, ...rest }) => {
-    return adminToken ? element : element;
+    return adminAuth ? element : <Navigate to={'/login'}/>;
   };
   return (
     <>
@@ -22,11 +23,15 @@ function App() {
       <Routes>
         <Route path='/login' element={<Login/>}/>
         <Route path='/' element={<PrivateMasterRoute element={<DashboardLayout />}/>}>
+
+            {/* Redirect / to /users */}
+            <Route index element={<Navigate to="users" replace />} />
+            
             {/* main */}
+            <Route path='users' element={<PrivateMasterRoute element={<Users />}/>}/>
             <Route path='deposits' element={<PrivateMasterRoute element={<Deposits/>}/>}/>
             <Route path='withdrawal' element={<PrivateMasterRoute element={ <Withdrawal/> }/>}/>
             <Route path='orders' element={<PrivateMasterRoute element={ <Orders/> }/>}/>
-            <Route path='users' element={<PrivateMasterRoute element={<Users />}/>}/>
             <Route path='funds' element={<PrivateMasterRoute element={<Funds />}/>}/>
             <Route path='address' element={<PrivateMasterRoute element={<Address />}/>}/>
             

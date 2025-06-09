@@ -1,11 +1,10 @@
 import React, { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import logo from '../assets/logo.png'
-import {Button, Typography } from 'antd'
-import { useDispatch, useSelector } from 'react-redux'
+import { Button } from 'antd'
 import { adminPost } from '../services/adminApi'
-import { setToken } from '../redux/MasterSlice'
-  
+import { useDispatch } from 'react-redux'
+import { setIsAuthenticated } from '../redux/AdminSlice'
+
 const InputField = ({
   lowerLabel,
   className , 
@@ -37,13 +36,10 @@ const InputField = ({
 
 const LoginForm = ({role}) => {
     const navigate = useNavigate()
-    const [ formData,setFormData]=useState({id: "",password : ""})
+    const [ formData,setFormData]=useState({email: "",password : ""})
     const [errors, setErrors] = useState({}); 
     const [loading,setLoading]=useState(false)
     const dispatch = useDispatch()
-    const { token  } = useSelector((state)=>state.Manager)
-    const { masterToken  } = useSelector((state)=>state.Master)
-
 
     const handleChange = (e) =>{
         const { name , value }= e.target
@@ -51,16 +47,20 @@ const LoginForm = ({role}) => {
         setErrors((prev) => ({ ...prev, [name]: '' }));
     }
 
+    useEffect(()=>{
+      setErrors({})
+    },[formData])
+
     const followeInputFields=[
         <InputField
-            placeholder={'Id'}
-            name={"id"}
+            placeholder={'email'}
+            name={"email"}
             handleChange={handleChange}
-            value={formData.id}
+            value={formData.email}
             className={{
             input : "w-full border custom-input border-gray-200 rounded px-3",
             }}
-            lowerLabel={<span className='text-sm text-gray-400'>Manager Id*</span>}
+            lowerLabel={<span className='text-sm text-gray-400'>Email*</span>}
             error={errors.id}
         />,
         <InputField
@@ -80,8 +80,8 @@ const LoginForm = ({role}) => {
         let validationErrors = {};
     
         // Follower & Provider validation rules
-        if (!formData.id) {
-            validationErrors.id = 'id is required.';
+        if (!formData.email) {
+            validationErrors.id = 'email is required.';
         } 
         if (!formData.password) {
           validationErrors.password = 'Password is required.';
@@ -97,14 +97,22 @@ const LoginForm = ({role}) => {
         e.preventDefault();
         console.log('Form Data:', formData);
         if (validate()) {
-          navigate('/dashboard')
+          try {
+            const response = await adminPost('/login',formData)
+            if(response.success){
+              dispatch(setIsAuthenticated())
+              navigate('/')
+            }
+          } catch (error) {
+            console.log(error.message);
+            if(error?.response?.data?.message){
+              setErrors((prev) => ({ ...prev, err: error?.response?.data?.message }));
+            }            
+          }
         }
       };
 
-      useEffect(()=>{
-        if(token){
-        }
-      },[token])
+
 
   return (
     <>
@@ -112,15 +120,13 @@ const LoginForm = ({role}) => {
         <div className='border rounded-lg flex justify-center p-6 lg:w-1/4'>
         <div className='w-full'>
               <div className=' text-center my-4'>
-                <div className='flex justify-center'>
-                  <img src={logo} alt="" />
-                </div>
                 <div className='text-2xl my-2 capitalize'>Admin Login</div>
                 <div className='text-xs'>Login to Dashboard</div>
               </div>
               { 
                 followeInputFields.map((val,idx)=><React.Fragment key={idx}>{val}</React.Fragment>) 
               }
+              {errors?.err && <p className="text-red-500 text-sm">{errors?.err}</p>}
               <div className='flex justify-center'>
               <Button 
                 type='default'
