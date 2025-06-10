@@ -59,13 +59,13 @@ const Funds = () => {
       render: (text) => <a>{text && formatDate(text)}</a>, 
     },
     {
-      title:<span className='text-gray-500 font-normal'>Proccessing Amount</span>,
+      title:<span className='text-gray-500 font-normal'>Rate/USDT</span>,
       dataIndex: 'rate',
       key: 'rate',
       render : (text)=> <a href="">{`$${Math.floor(text).toFixed(2)}`}</a>
     },
     {
-      title:<span className='text-gray-500 font-normal'>Proccessing Amount</span>,
+      title:<span className='text-gray-500 font-normal'>Mode</span>,
       dataIndex: 'paymentMode',
       key: 'paymentMode',
       render : (text)=> <div className='capitalize'>{text}</div>
