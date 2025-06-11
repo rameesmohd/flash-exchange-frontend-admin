@@ -1,9 +1,10 @@
 import { Button, DatePicker, Input, Table,Radio, Flex ,Typography, Card} from 'antd';
-import React, { useEffect, useState } from 'react'
+import React, { lazy, useEffect, useState } from 'react'
 import {formatDate } from '../../services/formatDate'
 import { adminGet, adminPatch } from '../../services/adminApi';
 import { Tag } from 'antd';
 import ConfirmModal from '../../components/common/ConfirmModal';
+const Uploads = lazy(() => import('../../components/Uploads'));
 
 const { RangePicker } = DatePicker;
 const { Search } = Input;
@@ -146,6 +147,11 @@ const Orders = () => {
           key: 'status',
           render: (status) => getStatusTag(status),
         },
+        {
+          title : 'Receipts',
+          key : 'receipts',
+          render : (text,render)=> <div className='flex'><Uploads order={render}/></div>
+        },
         { 
           title : '',
           key : '_id',
@@ -198,8 +204,9 @@ const Orders = () => {
       } finally {
         setLoading((prev)=>({...prev,table : false}))
       }
-      
   }
+
+
 
   useEffect(()=>{
     fetchOrders()
