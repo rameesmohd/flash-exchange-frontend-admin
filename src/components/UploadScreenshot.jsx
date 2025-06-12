@@ -97,6 +97,7 @@ const App = ({order,setOrder}) => {
         onPreview={handlePreview}
         onChange={handleChange}
         onRemove={handleRemove} 
+        multiple 
       >
         {fileList.length >= 8 ? null : uploadButton}
       </Upload>

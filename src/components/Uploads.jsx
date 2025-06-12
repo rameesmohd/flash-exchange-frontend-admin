@@ -33,7 +33,7 @@ const App = ({order}) => {
             Uploads
         </Button>
         <Modal
-            title="Receipts"
+            title={`Receipts #${orderState.orderId}`}
             centered
             open={openModal}
             onOk={() => setOpenModal(false)}
