@@ -5,6 +5,7 @@ import { adminGet, adminPatch } from '../../services/adminApi';
 import { Tag } from 'antd';
 import ConfirmModal from '../../components/common/ConfirmModal';
 const Uploads = lazy(() => import('../../components/Uploads'));
+import AddPayment from '../../components/OrderPaymentManager'
 
 const { RangePicker } = DatePicker;
 const { Search } = Input;
@@ -142,6 +143,12 @@ const Orders = () => {
           width : 200
         },
         {
+          title: 'Amount Fufulfilled',
+          dataIndex: 'fulfilledFiat',
+          key: 'fulfilledFiat',
+          render : (text,render)=> <div className='flex w-full justify-between items-center'>₹{text}/{render.fiat} <AddPayment onSuccess={fetchOrders} order={render}/></div>
+        },
+        {
           title: 'Status',
           dataIndex: 'status',
           key: 'status',
@@ -156,9 +163,10 @@ const Orders = () => {
           title : '',
           key : '_id',
           render : (text,render)=> <div className='flex'>
-              {
+              { render.status ==="pending" &&
               <>
                  <Button
+                    size='small'
                     loading={loading.success}
                     onClick={() =>
                       setModalState({ visible: true, type: 'approve', data: render })
@@ -169,6 +177,7 @@ const Orders = () => {
                   </Button>
 
                   <Button
+                    size='small'
                     loading={loading.failed}
                     onClick={() =>
                       setModalState({ visible: true, type: 'reject', data: render })
@@ -282,6 +291,7 @@ const Orders = () => {
         <div className=' w-full h-full'>
             <Table
               scroll={{ x: "max-content" }}
+              className='text-sm'
               loading={loading.table} 
               columns={getColumns(Orders)} 
               dataSource={Orders}

@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { Button, Divider, Flex, Image, Modal,Typography } from 'antd';
 import UploadScreenshot from '../components/UploadScreenshot'
 import { DeleteOutlined } from '@ant-design/icons';
@@ -12,6 +12,10 @@ const App = ({order}) => {
     const [previewImage, setPreviewImage] = useState('');
     const [previewOpen, setPreviewOpen] = useState(false);
     const [loading,setLoading] = useState(false)
+
+    useEffect(()=>{
+        setOrderState(order)
+    },[order])
 
     const handleRemove= async(url)=>{
         setLoading(true)
@@ -29,7 +33,7 @@ const App = ({order}) => {
     
     return (
         <Flex vertical gap="middle" align="flex-start">
-        <Button type="primary" className='bg-blue-500' onClick={() => setOpenModal(true)}>
+        <Button size='small' type="primary" className='bg-blue-500' onClick={() => setOpenModal(true)}>
             Uploads
         </Button>
         <Modal
