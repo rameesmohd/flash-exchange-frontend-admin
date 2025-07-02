@@ -43,13 +43,17 @@ const Withdrawal = () => {
   });
 
 
-  const handleConfirm = async () => {
+  const handleConfirm = async (txid) => {
     const { type, data } = modalState;
     const status = type === 'approve' ? 'success' : 'failed';
 
     try {
       setLoading((prev) => ({ ...prev, [status]: true }));
-      await adminPatch('/withdrawals', { status, id: data._id });
+      await adminPatch('/withdrawals', { 
+        status, 
+        id: data._id,
+        ...(txid && txid.length && { txid }),
+      });
       fetchWithdrawal(); // refresh
     } catch (error) {
       console.error(error);
@@ -266,6 +270,7 @@ const Withdrawal = () => {
 
     <ConfirmModal
       visible={modalState.visible}
+      type={modalState.type}
       onConfirm={handleConfirm}
       onCancel={() => setModalState({ visible: false, type: '', data: null })}
       loading={loading[modalState.type === 'approve' ? 'success' : 'failed']}
