@@ -125,7 +125,7 @@ export default function App({role}) {
           {/* Logo */}
           <Link to={'#'} className="flex px-3 items-center space-x-3 rtl:space-x-reverse">
             <span className="self-center text-xl font-semibold whitespace-nowrap text-blue-800">
-              <img src={logo} alt="" className="h-6 w-6" />
+              {/* <img src={logo} alt="" className="h-6 w-6" /> */}
             </span>
             <div className='text-lg capitalize'>Admin Panel</div>
           </Link>
