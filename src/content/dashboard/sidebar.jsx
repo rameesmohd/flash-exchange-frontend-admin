@@ -9,22 +9,22 @@ const adminSidebarOptions =
   [
     { 
       icon : investment,       
-      title: "Users", nav: '/users' },
+      title: "All Users", nav: '/users' },
     { 
       icon:settings,
-      title: "Funds", nav: '/funds' },
-    { 
-      icon:settings,
-        title: "Orders", nav: '/orders' },
+      title: "Address Orders", nav: '/orders' },
     { 
       icon:deposit,
-        title: "Deposit", nav: '/deposits' },
+        title: "$ Deposits", nav: '/deposits' },
     {  
       icon: withdrawal,      
-        title: "Withdrawal", nav: '/withdrawal' },
+        title: "$ Withdrawals", nav: '/withdrawal' },
     {  
       icon: withdrawal,      
-      title: "Address", nav: '/address' },
+      title: "Wallet Address", nav: '/address' },
+    { 
+      icon:settings,
+      title: "Our Funds", nav: '/funds' },
   ];
 
   export {
