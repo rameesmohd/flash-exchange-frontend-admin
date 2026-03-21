@@ -10,6 +10,8 @@ import SendEmail from './pages/admin/SendEmail'
 import Funds from './pages/admin/Funds'
 import Orders from './pages/admin/Orders'
 import Address from './pages/admin/Address'
+import Dashboard from './pages/admin/Dashboard'
+
 import 'antd/dist/reset.css';
 
 function App() {
@@ -34,6 +36,7 @@ function App() {
             <Route path='orders' element={<PrivateMasterRoute element={ <Orders/> }/>}/>
             <Route path='funds' element={<PrivateMasterRoute element={<Funds />}/>}/>
             <Route path='address' element={<PrivateMasterRoute element={<Address />}/>}/>
+            <Route path='dashboard' element={<PrivateMasterRoute element={<Dashboard />}/>}/>
             
             {/* Extra */}
             <Route path='add-funds' element={<PrivateMasterRoute element={<AddFunds/>}/>}/>

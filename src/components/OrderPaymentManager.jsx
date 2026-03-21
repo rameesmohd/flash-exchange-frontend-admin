@@ -123,7 +123,7 @@ const OrderPaymentManager = ({ order, onSuccess }) => {
   return (
     <>
       <Button size="small" type="default" onClick={showModal}>
-        Add Payment
+       + Add 
       </Button>
 
       <Modal

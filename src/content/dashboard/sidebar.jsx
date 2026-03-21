@@ -9,6 +9,9 @@ const adminSidebarOptions =
   [
     { 
       icon : investment,       
+      title: "Dashboard", nav: '/dashboard' },
+    { 
+      icon : investment,       
       title: "All Users", nav: '/users' },
     { 
       icon:settings,
