@@ -14,7 +14,7 @@
 //     return new Intl.DateTimeFormat('en-US', options).format(date);
 //   };
 
-export const formatDate = (date, opts) => {
+const formatDate = (date, opts) => {
   if (!date) return '—';
  
   const d = new Date(date);

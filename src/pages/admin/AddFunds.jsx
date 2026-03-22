@@ -1,4 +1,4 @@
-import { Input, Button, Form, Card, Select, Flex, Typography } from 'antd';
+import { Input, Button, Form, Card, Select, Flex, Typography, message } from 'antd';
 import { LockOutlined } from '@ant-design/icons';
 import React, { useState } from 'react';
 import { adminPost } from '../../services/adminApi';
@@ -13,8 +13,11 @@ const AddFunds = () => {
   const handleSubmit = async (values) => {
     setLoading(true);
     try {
-      await adminPost('/add-to-wallet', values);
       setDisable(true);
+      const res = await adminPost('/add-to-wallet', values);
+      if(res.success){
+        message.success(res.message)
+      }
     } catch (error) {
       console.log(error);
     } finally {
