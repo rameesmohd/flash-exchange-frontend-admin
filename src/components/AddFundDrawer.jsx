@@ -3,11 +3,25 @@ import { PlusOutlined } from '@ant-design/icons';
 import { Button, Col, Drawer, Form, Input, message, Row, Select, Space } from 'antd';
 import { adminPatch, adminPost } from '../services/adminApi';
 
+const FUND_TYPE_OPTIONS = [
+  { value: 'gateway', label: 'Gateway' },
+  { value: 'clean',   label: 'Clean'   },
+  { value: 'bank',    label: 'Bank'    },
+];
+
+const CODE_HINTS = {
+  gateway: 'e.g. GW01, GW02',
+  clean:   'e.g. CF01, CF02',
+  bank:    'e.g. BT01, BT02',
+};
+
 const AddFundDrawer = ({ editingRecord = null, onCloseDrawer, onSuccess }) => {
-  const [open, setOpen] = useState(false);
+  const [open, setOpen]       = useState(false);
   const [loading, setLoading] = useState(false);
   const [form] = Form.useForm();
+
   const selectedPaymentMode = Form.useWatch('paymentMode', form);
+  const selectedFundType    = Form.useWatch('fundType', form);
 
   useEffect(() => {
     if (editingRecord) {
@@ -26,14 +40,14 @@ const AddFundDrawer = ({ editingRecord = null, onCloseDrawer, onSuccess }) => {
     try {
       setLoading(true);
       const apiCall = editingRecord
-        ? () => adminPatch(`/fund`,{id: editingRecord._id, values})
+        ? () => adminPatch(`/fund`, { id: editingRecord._id, values })
         : () => adminPost('/fund', values);
 
       const response = await apiCall();
 
       if (response.success) {
         message.success(editingRecord ? 'Fund updated' : 'Fund added');
-        if (onSuccess) onSuccess(); // trigger refetch
+        if (onSuccess) onSuccess();
         onClose();
       } else {
         message.error('Something went wrong');
@@ -50,8 +64,8 @@ const AddFundDrawer = ({ editingRecord = null, onCloseDrawer, onSuccess }) => {
     <>
       <Button
         type="primary"
-        className="bg-blue-500"
-        onClick={()=>setOpen(true)}
+        style={{ background: '#1558b0', borderColor: '#1558b0' }}
+        onClick={() => setOpen(true)}
         icon={<PlusOutlined />}
       >
         Add Fund
@@ -69,11 +83,11 @@ const AddFundDrawer = ({ editingRecord = null, onCloseDrawer, onSuccess }) => {
             <Button onClick={onClose}>Cancel</Button>
             <Button
               loading={loading}
-              className="bg-blue-500"
               type="primary"
+              style={{ background: '#1558b0', borderColor: '#1558b0' }}
               onClick={() => form.submit()}
             >
-              Submit
+              {editingRecord ? 'Update' : 'Submit'}
             </Button>
           </Space>
         }
@@ -89,8 +103,12 @@ const AddFundDrawer = ({ editingRecord = null, onCloseDrawer, onSuccess }) => {
             teleChannel: '',
             teleApi: '',
             message: '',
+            fundType: undefined,
+            code: '',
+            paymentMode: undefined,
           }}
         >
+          {/* Type + Rate */}
           <Row gutter={16}>
             <Col span={12}>
               <Form.Item
@@ -104,74 +122,105 @@ const AddFundDrawer = ({ editingRecord = null, onCloseDrawer, onSuccess }) => {
             <Col span={12}>
               <Form.Item
                 name="rate"
-                label="Rate"
+                label="Rate (₹ per USDT)"
                 rules={[{ required: true, message: 'Please enter rate' }]}
               >
-                <Input placeholder="e.g. 25.5" type="number" />
+                <Input placeholder="e.g. 85.50" type="number" prefix="₹" />
               </Form.Item>
             </Col>
           </Row>
 
+          {/* Fund Type + Code */}
           <Row gutter={16}>
             <Col span={12}>
               <Form.Item
-                name="maxFulfillmentTime"
-                label="Max Fulfillment Time (Hours)"
-                rules={[{ required: true, message: 'Please enter max hours' }]}
+                name="fundType"
+                label="Fund Type"
+                rules={[{ required: true, message: 'Please select fund type' }]}
+                extra={
+                  <span style={{ fontSize: 11, color: '#94a3b8' }}>
+                    Determines which receipt template is used
+                  </span>
+                }
               >
-                <Input placeholder="e.g. 2" type="number" />
+                <Select
+                  placeholder="Select fund type"
+                  options={FUND_TYPE_OPTIONS}
+                />
               </Form.Item>
             </Col>
             <Col span={12}>
               <Form.Item
-                name="teleChannel"
-                label="Telegram Channel Id"
-              >
-                <Input placeholder="-100....." />
-              </Form.Item>
-            </Col>
-          </Row>
-
-          <Row gutter={16}>
-            <Col span={24}>
-              <Form.Item
-                name="teleApi"
-                label="Telegram API Key"
-              >
-                <Input placeholder="e.g. 123456:ABC-DEF..." />
-              </Form.Item>
-            </Col>
-          </Row>
-
-          <Row gutter={16}>
-            <Col span={24}>
-              <Form.Item
-                name="message"
-                label="Message"
+                name="code"
+                label="Fund Code"
                 rules={[
-                  { required: false, message: 'Please enter a message' },
+                  { required: true, message: 'Please enter fund code' },
+                  { pattern: /^[A-Z0-9]{2,8}$/, message: 'Uppercase letters and numbers only, 2–8 chars' },
                 ]}
+                extra={
+                  <span style={{ fontSize: 11, color: '#94a3b8' }}>
+                    {CODE_HINTS[selectedFundType] || 'e.g. GW01, CF01, BT01'}
+                  </span>
+                }
               >
-                <Input.TextArea rows={4} placeholder="Optional message to display..." />
+                <Input
+                  placeholder={CODE_HINTS[selectedFundType] || 'e.g. GW01'}
+                  style={{ fontFamily: 'monospace', fontWeight: 600, letterSpacing: 1 }}
+                  onChange={e =>
+                    form.setFieldValue('code', e.target.value.toUpperCase().replace(/[^A-Z0-9]/g, ''))
+                  }
+                />
               </Form.Item>
             </Col>
           </Row>
 
+          {/* Payment Mode + Max Fulfillment */}
           <Row gutter={16}>
-            <Col span={24}>
+            <Col span={12}>
               <Form.Item
                 name="paymentMode"
                 label="Payment Mode"
                 rules={[{ required: true, message: 'Please select payment mode' }]}
               >
                 <Select
-                  placeholder="Select a payment mode"
-                  value={selectedPaymentMode} 
+                  placeholder="Select payment mode"
                   options={[
-                      { value: 'bank', label: 'Bank', disabled: selectedPaymentMode === 'bank' },
-                      { value: 'upi', label: 'UPI', disabled: selectedPaymentMode === 'upi' },
+                    { value: 'bank', label: 'Bank', disabled: selectedPaymentMode === 'bank' },
+                    { value: 'upi',  label: 'UPI',  disabled: selectedPaymentMode === 'upi'  },
                   ]}
                 />
+              </Form.Item>
+            </Col>
+            <Col span={12}>
+              <Form.Item
+                name="maxFulfillmentTime"
+                label="Max Fulfillment (Hours)"
+                rules={[{ required: true, message: 'Please enter max hours' }]}
+              >
+                <Input placeholder="e.g. 2" type="number" suffix="hrs" />
+              </Form.Item>
+            </Col>
+          </Row>
+
+          {/* Telegram */}
+          <Row gutter={16}>
+            <Col span={12}>
+              <Form.Item name="teleChannel" label="Telegram Channel ID">
+                <Input placeholder="-100....." />
+              </Form.Item>
+            </Col>
+            <Col span={12}>
+              <Form.Item name="teleApi" label="Telegram API Key">
+                <Input placeholder="123456:ABC-DEF..." />
+              </Form.Item>
+            </Col>
+          </Row>
+
+          {/* Message */}
+          <Row gutter={16}>
+            <Col span={24}>
+              <Form.Item name="message" label="Message">
+                <Input.TextArea rows={3} placeholder="Optional message to display to users..." style={{ resize: 'none' }} />
               </Form.Item>
             </Col>
           </Row>

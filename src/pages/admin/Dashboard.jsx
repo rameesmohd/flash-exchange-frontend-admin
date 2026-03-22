@@ -1,19 +1,16 @@
 // pages/admin/Dashboard.jsx
-// Fetches stats from GET /admin/dashboard/stats and renders them in stat cards.
-// Matches the IBM Plex Mono / IBM Plex Sans aesthetic of the Orders page.
-
 import React, { useEffect, useState, useCallback } from 'react';
 import { adminGet } from '../../services/adminApi';
 
 /* ─── Helpers ─────────────────────────────────────────────────────── */
-const fmt = (n) =>
-  typeof n === 'number'
-    ? n % 1 === 0
-      ? n.toLocaleString('en-IN')
-      : n.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })
-    : '—';
-
+const fmt    = (n) => typeof n === 'number' ? n % 1 === 0 ? n.toLocaleString('en-IN') : n.toLocaleString('en-IN', { minimumFractionDigits:2, maximumFractionDigits:2 }) : '—';
 const fmtINR = (n) => `₹${fmt(n)}`;
+
+const fundTypeColors = {
+  gateway: { color: '#1558b0', bg: '#eff6ff' },
+  clean:   { color: '#15803d', bg: '#f0fdf4' },
+  bank:    { color: '#92400e', bg: '#fffbeb' },
+};
 
 /* ─── Icons ───────────────────────────────────────────────────────── */
 const RefreshIcon = () => (
@@ -29,7 +26,6 @@ const STYLES = `
 
   .dash-root { font-family: 'IBM Plex Sans', sans-serif; background: #f8f9fb; min-height: 100vh; padding: 20px; }
 
-  /* header */
   .dash-header { display: flex; align-items: flex-start; justify-content: space-between; margin-bottom: 20px; }
   .dash-title { font-family: 'IBM Plex Mono', monospace; font-size: 15px; font-weight: 700; color: #111827; letter-spacing: -.3px; }
   .dash-sub { font-family: 'IBM Plex Mono', monospace; font-size: 11px; color: #6b7280; margin-top: 3px; }
@@ -38,19 +34,15 @@ const STYLES = `
   .refresh-btn.spinning svg { animation: spin .7s linear infinite; }
   @keyframes spin { to { transform: rotate(360deg); } }
 
-  /* period tabs */
   .period-tabs { display: flex; gap: 4px; margin-bottom: 16px; background: #fff; border: 1.5px solid #e4e7ec; border-radius: 8px; padding: 4px; width: fit-content; }
   .period-tab { padding: 5px 16px; border-radius: 5px; font-size: 12px; font-family: 'IBM Plex Mono', monospace; font-weight: 500; cursor: pointer; color: #6b7280; border: none; background: transparent; transition: all .15s; }
   .period-tab.active { background: #1558b0; color: #fff; }
   .period-tab:hover:not(.active) { background: #f1f5f9; color: #374151; }
 
-  /* section label */
   .section-label { font-family: 'IBM Plex Mono', monospace; font-size: 10px; font-weight: 600; text-transform: uppercase; letter-spacing: 1px; color: #9ca3af; margin-bottom: 10px; }
 
-  /* stat grid */
   .stat-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 12px; margin-bottom: 20px; }
-  
-  /* stat card */
+
   .stat-card { background: #fff; border: 1.5px solid #e4e7ec; border-radius: 10px; padding: 16px 18px; position: relative; overflow: hidden; transition: box-shadow .15s; }
   .stat-card:hover { box-shadow: 0 4px 16px rgba(0,0,0,.07); }
   .stat-card::before { content: ''; position: absolute; top: 0; left: 0; right: 0; height: 3px; border-radius: 10px 10px 0 0; }
@@ -59,30 +51,25 @@ const STYLES = `
   .stat-card.failed::before   { background: #ef4444; }
   .stat-card.dispute::before  { background: #3b82f6; }
   .stat-card.volume::before   { background: #1558b0; }
-  .stat-card.fulfilled::before { background: #8b5cf6; }
+  .stat-card.fulfilled::before{ background: #8b5cf6; }
   .stat-card.orders::before   { background: #6b7280; }
 
   .stat-card-label { font-family: 'IBM Plex Mono', monospace; font-size: 10.5px; font-weight: 600; text-transform: uppercase; letter-spacing: .6px; color: #6b7280; margin-bottom: 8px; display: flex; align-items: center; gap: 6px; }
   .stat-dot { width: 7px; height: 7px; border-radius: 50%; flex-shrink: 0; }
-  .dot-pending  { background: #f97316; }
-  .dot-success  { background: #22c55e; }
-  .dot-failed   { background: #ef4444; }
-  .dot-dispute  { background: #3b82f6; }
-  .dot-volume   { background: #1558b0; }
-  .dot-fulfilled{ background: #8b5cf6; }
+  .dot-pending  { background: #f97316; }  .dot-success { background: #22c55e; }
+  .dot-failed   { background: #ef4444; }  .dot-dispute { background: #3b82f6; }
+  .dot-volume   { background: #1558b0; }  .dot-fulfilled { background: #8b5cf6; }
   .dot-orders   { background: #6b7280; }
 
   .stat-value { font-family: 'IBM Plex Mono', monospace; font-size: 22px; font-weight: 700; color: #111827; line-height: 1; margin-bottom: 4px; }
   .stat-value.small { font-size: 17px; }
   .stat-sub { font-family: 'IBM Plex Mono', monospace; font-size: 11px; color: #9ca3af; }
 
-  /* fulfillment bar */
   .fulfil-bar-wrap { margin-top: 8px; }
   .fulfil-bar-track { height: 4px; background: #e4e7ec; border-radius: 9px; overflow: hidden; }
   .fulfil-bar-fill  { height: 100%; border-radius: 9px; background: #8b5cf6; transition: width .4s ease; }
   .fulfil-bar-label { font-family: 'IBM Plex Mono', monospace; font-size: 10px; color: #6b7280; margin-top: 4px; display: flex; justify-content: space-between; }
 
-  /* breakdown row */
   .breakdown-row { display: grid; grid-template-columns: repeat(auto-fill, minmax(340px, 1fr)); gap: 12px; }
   .breakdown-card { background: #fff; border: 1.5px solid #e4e7ec; border-radius: 10px; padding: 18px 20px; }
   .breakdown-card-title { font-family: 'IBM Plex Mono', monospace; font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: .6px; color: #374151; margin-bottom: 14px; }
@@ -94,6 +81,44 @@ const STYLES = `
   .breakdown-table .num { text-align: right; }
   .breakdown-table .label-cell { display: flex; align-items: center; gap: 7px; }
 
+  /* ── Per-fund section ── */
+  .fund-breakdown-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 12px; }
+
+  .fund-card { background: #fff; border: 1.5px solid #e4e7ec; border-radius: 10px; overflow: hidden; transition: box-shadow .15s; }
+  .fund-card:hover { box-shadow: 0 4px 16px rgba(0,0,0,.07); }
+
+  .fund-card-header { padding: 12px 16px 10px; border-bottom: 1px solid #f0f0f0; display: flex; align-items: center; gap: 10px; }
+  .fund-card-code { font-family: 'IBM Plex Mono', monospace; font-size: 11px; font-weight: 700; border-radius: 5px; padding: 2px 8px; letter-spacing: 1px; }
+  .fund-card-name { font-family: 'IBM Plex Mono', monospace; font-size: 12.5px; font-weight: 600; color: #111827; flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .fund-card-status { font-size: 10px; font-family: 'IBM Plex Mono', monospace; font-weight: 600; text-transform: uppercase; padding: 2px 7px; border-radius: 20px; }
+  .fund-card-status.active   { background: #f0fdf4; color: #15803d; }
+  .fund-card-status.inactive { background: #fef2f2; color: #b91c1c; }
+  .fund-card-status.stockout { background: #fffbeb; color: #b45309; }
+
+  .fund-card-body { padding: 12px 16px 14px; }
+
+  /* mini stat row inside fund card */
+  .fund-mini-stats { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 12px; }
+  .fund-mini-stat { background: #f9fafb; border-radius: 7px; padding: 8px 10px; }
+  .fund-mini-label { font-family: 'IBM Plex Mono', monospace; font-size: 9.5px; text-transform: uppercase; letter-spacing: .6px; color: #9ca3af; margin-bottom: 3px; display: flex; align-items: center; gap: 4px; }
+  .fund-mini-val { font-family: 'IBM Plex Mono', monospace; font-size: 15px; font-weight: 700; color: #111827; line-height: 1; }
+  .fund-mini-sub { font-family: 'IBM Plex Mono', monospace; font-size: 10px; color: #6b7280; margin-top: 2px; }
+
+  /* fund fulfillment bar */
+  .fund-fulfil { margin-top: 8px; }
+  .fund-fulfil-bar-track { height: 3px; background: #e4e7ec; border-radius: 9px; overflow: hidden; }
+  .fund-fulfil-bar-fill  { height: 100%; border-radius: 9px; background: #8b5cf6; transition: width .4s ease; }
+  .fund-fulfil-label { font-family: 'IBM Plex Mono', monospace; font-size: 9.5px; color: #9ca3af; margin-top: 3px; display: flex; justify-content: space-between; }
+
+  /* status pills row */
+  .fund-status-pills { display: flex; gap: 5px; flex-wrap: wrap; }
+  .fund-pill { display: inline-flex; align-items: center; gap: 4px; padding: 2px 8px; border-radius: 20px; font-family: 'IBM Plex Mono', monospace; font-size: 10.5px; font-weight: 600; }
+  .fund-pill-pending  { background: #fff7ed; color: #c2410c; }
+  .fund-pill-success  { background: #f0fdf4; color: #15803d; }
+  .fund-pill-failed   { background: #fef2f2; color: #b91c1c; }
+  .fund-pill-dispute  { background: #eff6ff; color: #1d4ed8; }
+  .fund-pill-dot { width: 5px; height: 5px; border-radius: 50%; flex-shrink: 0; }
+
   /* skeleton */
   .skel { background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%); background-size: 200% 100%; animation: shimmer 1.2s infinite; border-radius: 4px; }
   @keyframes shimmer { to { background-position: -200% 0; } }
@@ -102,27 +127,20 @@ const STYLES = `
 `;
 
 /* ─── Sub-components ──────────────────────────────────────────────── */
-const Skeleton = () => (
-  <>
-    <div className="skel skel-val" />
-    <div className="skel skel-sub" />
-  </>
-);
+const Skeleton = () => (<><div className="skel skel-val" /><div className="skel skel-sub" /></>);
 
 const DOT_COLORS = {
-  pending: 'dot-pending', success: 'dot-success', failed: 'dot-failed',
-  dispute: 'dot-dispute', volume: 'dot-volume', fulfilled: 'dot-fulfilled', orders: 'dot-orders',
+  pending:'dot-pending', success:'dot-success', failed:'dot-failed',
+  dispute:'dot-dispute', volume:'dot-volume', fulfilled:'dot-fulfilled', orders:'dot-orders',
 };
 
-const StatCard = ({ label, value, sub, type = 'orders', loading, children }) => (
+const StatCard = ({ label, value, sub, type='orders', loading, children }) => (
   <div className={`stat-card ${type}`}>
     <div className="stat-card-label">
       <span className={`stat-dot ${DOT_COLORS[type] || 'dot-orders'}`} />
       {label}
     </div>
-    {loading ? (
-      <Skeleton />
-    ) : (
+    {loading ? <Skeleton /> : (
       <>
         <div className={`stat-value ${String(value).length > 9 ? 'small' : ''}`}>{value}</div>
         {sub && <div className="stat-sub">{sub}</div>}
@@ -133,23 +151,15 @@ const StatCard = ({ label, value, sub, type = 'orders', loading, children }) => 
 );
 
 const FulfillCard = ({ bucket, loading }) => {
-  const pct = bucket?.totalFiat > 0
-    ? Math.min(100, (bucket.totalFulfilled / bucket.totalFiat) * 100)
-    : 0;
-
+  const pct = bucket?.totalFiat > 0 ? Math.min(100, (bucket.totalFulfilled / bucket.totalFiat) * 100) : 0;
   return (
     <div className="stat-card fulfilled">
-      <div className="stat-card-label">
-        <span className="stat-dot dot-fulfilled" />
-        Fulfillment
-      </div>
+      <div className="stat-card-label"><span className="stat-dot dot-fulfilled" />Fulfillment</div>
       {loading ? <Skeleton /> : (
         <>
           <div className="stat-value">{pct.toFixed(1)}%</div>
           <div className="fulfil-bar-wrap">
-            <div className="fulfil-bar-track">
-              <div className="fulfil-bar-fill" style={{ width: `${pct}%` }} />
-            </div>
+            <div className="fulfil-bar-track"><div className="fulfil-bar-fill" style={{ width:`${pct}%` }} /></div>
             <div className="fulfil-bar-label">
               <span>{fmtINR(bucket?.totalFulfilled ?? 0)} paid</span>
               <span>{fmtINR(bucket?.totalFiat ?? 0)} ordered</span>
@@ -163,100 +173,153 @@ const FulfillCard = ({ bucket, loading }) => {
 
 const BreakdownTable = ({ title, buckets, loading }) => {
   const rows = [
-    { key: 'pending',  label: 'Pending',  dotClass: 'dot-pending' },
-    { key: 'success',  label: 'Success',  dotClass: 'dot-success' },
-    { key: 'failed',   label: 'Failed',   dotClass: 'dot-failed' },
-    { key: 'dispute',  label: 'Dispute',  dotClass: 'dot-dispute' },
+    { key:'pending', label:'Pending', dotClass:'dot-pending' },
+    { key:'success', label:'Success', dotClass:'dot-success' },
+    { key:'failed',  label:'Failed',  dotClass:'dot-failed'  },
+    { key:'dispute', label:'Dispute', dotClass:'dot-dispute' },
   ];
-
   return (
     <div className="breakdown-card">
       <div className="breakdown-card-title">{title}</div>
       <table className="breakdown-table">
-        <thead>
-          <tr>
-            <th>Status</th>
-            <th className="num">Orders</th>
-            <th className="num">Volume (₹)</th>
-            <th className="num">Fulfilled (₹)</th>
-          </tr>
-        </thead>
+        <thead><tr><th>Status</th><th className="num">Orders</th><th className="num">Volume (₹)</th><th className="num">Fulfilled (₹)</th></tr></thead>
         <tbody>
           {loading
-            ? Array.from({ length: 4 }, (_, i) => (
+            ? Array.from({length:4},(_,i)=>(
                 <tr key={i}>
-                  <td><div className="skel" style={{ height: 14, width: '80%' }} /></td>
-                  <td><div className="skel" style={{ height: 14, width: '60%', marginLeft: 'auto' }} /></td>
-                  <td><div className="skel" style={{ height: 14, width: '80%', marginLeft: 'auto' }} /></td>
-                  <td><div className="skel" style={{ height: 14, width: '80%', marginLeft: 'auto' }} /></td>
-                </tr>
-              ))
-            : rows.map((r) => {
+                  <td><div className="skel" style={{height:14,width:'80%'}}/></td>
+                  <td><div className="skel" style={{height:14,width:'60%',marginLeft:'auto'}}/></td>
+                  <td><div className="skel" style={{height:14,width:'80%',marginLeft:'auto'}}/></td>
+                  <td><div className="skel" style={{height:14,width:'80%',marginLeft:'auto'}}/></td>
+                </tr>))
+            : rows.map((r)=>{
                 const b = buckets ?? {};
                 return (
                   <tr key={r.key}>
-                    <td>
-                      <span className="label-cell">
-                        <span className={`stat-dot ${r.dotClass}`} />
-                        {r.label}
-                      </span>
-                    </td>
+                    <td><span className="label-cell"><span className={`stat-dot ${r.dotClass}`}/>{r.label}</span></td>
                     <td className="num">{fmt(b[r.key] ?? 0)}</td>
                     <td className="num">{fmtINR(b.totalFiat ?? 0)}</td>
                     <td className="num">{fmtINR(b.totalFulfilled ?? 0)}</td>
-                  </tr>
-                );
-              })
-          }
+                  </tr>);
+              })}
         </tbody>
       </table>
     </div>
   );
 };
 
-/* ═══════════════════════════════════════════════════════════════════ */
-/*  Main Component                                                     */
+/* ─── FundCard ────────────────────────────────────────────────────── */
+const FundCard = ({ fund, period, loading }) => {
+  const bucket  = fund.stats?.[period] ?? {};
+  const ftCfg   = fundTypeColors[fund.fundType] || fundTypeColors.gateway;
+  const pct     = bucket.totalFiat > 0 ? Math.min(100, (bucket.totalFulfilled / bucket.totalFiat) * 100) : 0;
+
+  const pills = [
+    { key:'pending', label:'Pending', dot:'#f97316', cls:'fund-pill-pending' },
+    { key:'success', label:'OK',      dot:'#22c55e', cls:'fund-pill-success' },
+    { key:'failed',  label:'Failed',  dot:'#ef4444', cls:'fund-pill-failed'  },
+    { key:'dispute', label:'Dispute', dot:'#3b82f6', cls:'fund-pill-dispute' },
+  ].filter(p => (bucket[p.key] ?? 0) > 0);
+
+  return (
+    <div className="fund-card">
+      <div className="fund-card-header">
+        <span className="fund-card-code" style={{ color:ftCfg.color, background:ftCfg.bg }}>
+          {fund.code}
+        </span>
+        <span className="fund-card-name">{fund.type}</span>
+        <span className={`fund-card-status ${fund.status}`}>{fund.status}</span>
+      </div>
+
+      <div className="fund-card-body">
+        {loading ? (
+          <><div className="skel skel-val" style={{marginBottom:6}}/><div className="skel skel-sub"/></>
+        ) : (
+          <>
+            {/* Mini stats */}
+            <div className="fund-mini-stats">
+              <div className="fund-mini-stat">
+                <div className="fund-mini-label"><span className="stat-dot dot-orders"/>Orders</div>
+                <div className="fund-mini-val">{fmt(bucket.totalOrders ?? 0)}</div>
+              </div>
+              <div className="fund-mini-stat">
+                <div className="fund-mini-label"><span className="stat-dot dot-pending"/>Pending</div>
+                <div className="fund-mini-val">{fmt(bucket.pending ?? 0)}</div>
+              </div>
+              <div className="fund-mini-stat">
+                <div className="fund-mini-label"><span className="stat-dot dot-volume"/>Volume</div>
+                <div className="fund-mini-val" style={{fontSize:13}}>{fmtINR(bucket.totalFiat ?? 0)}</div>
+              </div>
+              <div className="fund-mini-stat">
+                <div className="fund-mini-label"><span className="stat-dot dot-success"/>Success</div>
+                <div className="fund-mini-val">{fmt(bucket.success ?? 0)}</div>
+              </div>
+            </div>
+
+            {/* Fulfillment bar */}
+            <div className="fund-fulfil">
+              <div className="fund-fulfil-bar-track">
+                <div className="fund-fulfil-bar-fill" style={{ width:`${pct}%` }} />
+              </div>
+              <div className="fund-fulfil-label">
+                <span>Fulfillment {pct.toFixed(1)}%</span>
+                <span>{fmtINR(bucket.totalFulfilled ?? 0)} / {fmtINR(bucket.totalFiat ?? 0)}</span>
+              </div>
+            </div>
+
+            {/* Status pills — only non-zero */}
+            {pills.length > 0 && (
+              <div className="fund-status-pills" style={{ marginTop:10 }}>
+                {pills.map(p => (
+                  <span key={p.key} className={`fund-pill ${p.cls}`}>
+                    <span className="fund-pill-dot" style={{ background:p.dot }} />
+                    {p.label}: {fmt(bucket[p.key])}
+                  </span>
+                ))}
+              </div>
+            )}
+          </>
+        )}
+      </div>
+    </div>
+  );
+};
+
 /* ═══════════════════════════════════════════════════════════════════ */
 const PERIODS = [
-  { key: 'today', label: 'Today' },
-  { key: 'week',  label: 'This Week' },
-  { key: 'month', label: 'This Month' },
-  { key: 'total', label: 'All Time' },
+  { key:'today', label:'Today'      },
+  { key:'week',  label:'This Week'  },
+  { key:'month', label:'This Month' },
+  { key:'total', label:'All Time'   },
 ];
 
 const Dashboard = () => {
-  const [stats, setStats]       = useState(null);
-  const [loading, setLoading]   = useState(false);
-  const [period, setPeriod]     = useState('today');
+  const [stats, setStats]     = useState(null);
+  const [loading, setLoading] = useState(false);
+  const [period, setPeriod]   = useState('today');
   const [lastRefresh, setLastRefresh] = useState(null);
 
   const fetchStats = useCallback(async () => {
     setLoading(true);
     try {
       const res = await adminGet('/dashboard/stats');
-      if (res?.success) {
-        setStats(res.stats);
-        setLastRefresh(new Date());
-      }
-    } catch (e) {
-      console.error('Dashboard stats error:', e);
-    } finally {
-      setLoading(false);
-    }
+      if (res?.success) { setStats(res.stats); setLastRefresh(new Date()); }
+    } catch (e) { console.error('Dashboard stats error:', e); }
+    finally { setLoading(false); }
   }, []);
 
   useEffect(() => {
     fetchStats();
-    // Auto-refresh every 2 minutes
-    const interval = setInterval(fetchStats, 2 * 60 * 1000);
-    return () => clearInterval(interval);
+    const id = setInterval(fetchStats, 2 * 60 * 1000);
+    return () => clearInterval(id);
   }, [fetchStats]);
 
   const bucket = stats?.[period] ?? null;
+  const byFund = stats?.byFund ?? [];
 
   const formatRefreshTime = () => {
     if (!lastRefresh) return '';
-    return `Updated ${lastRefresh.toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: true })} IST`;
+    return `Updated ${lastRefresh.toLocaleTimeString('en-IN', { hour:'2-digit', minute:'2-digit', second:'2-digit', hour12:true, timeZone:'Asia/Kolkata' })} IST`;
   };
 
   return (
@@ -264,61 +327,66 @@ const Dashboard = () => {
       <style>{STYLES}</style>
       <div className="dash-root">
 
-        {/* ── Header ── */}
+        {/* Header */}
         <div className="dash-header">
           <div>
             <div className="dash-title">Dashboard</div>
-            <div className="dash-sub">
-              {stats?.asOf
-                ? `Live · ${formatRefreshTime()}`
-                : 'Loading statistics…'}
-            </div>
+            <div className="dash-sub">{stats?.asOf ? `Live · ${formatRefreshTime()}` : 'Loading statistics…'}</div>
           </div>
-          <button
-            className={`refresh-btn ${loading ? 'spinning' : ''}`}
-            onClick={fetchStats}
-            disabled={loading}
-          >
-            <RefreshIcon />
-            Refresh
+          <button className={`refresh-btn ${loading ? 'spinning' : ''}`} onClick={fetchStats} disabled={loading}>
+            <RefreshIcon />Refresh
           </button>
         </div>
 
-        {/* ── Period tabs ── */}
+        {/* Period tabs */}
         <div className="period-tabs">
           {PERIODS.map((p) => (
-            <button
-              key={p.key}
-              className={`period-tab ${period === p.key ? 'active' : ''}`}
-              onClick={() => setPeriod(p.key)}
-            >
+            <button key={p.key} className={`period-tab ${period===p.key?'active':''}`} onClick={() => setPeriod(p.key)}>
               {p.label}
             </button>
           ))}
         </div>
 
-        {/* ── Top stat cards ── */}
-        <div className="section-label">Overview · {PERIODS.find((p) => p.key === period)?.label}</div>
+        {/* Overall stat cards */}
+        <div className="section-label">Overview · {PERIODS.find(p=>p.key===period)?.label}</div>
         <div className="stat-grid">
-          <StatCard label="Total Orders" value={fmt(bucket?.totalOrders ?? 0)} type="orders" loading={loading} />
-          <StatCard label="Volume (Fiat)" value={fmtINR(bucket?.totalFiat ?? 0)} sub="Total fiat ordered" type="volume" loading={loading} />
-          <StatCard label="Pending" value={fmt(bucket?.pending ?? 0)} sub="Awaiting action" type="pending" loading={loading} />
-          <StatCard label="Success" value={fmt(bucket?.success ?? 0)} sub="Approved orders" type="success" loading={loading} />
-          <StatCard label="Failed / Rejected" value={fmt(bucket?.failed ?? 0)} sub="Rejected orders" type="failed" loading={loading} />
-          <StatCard label="Dispute" value={fmt(bucket?.dispute ?? 0)} sub="Under review" type="dispute" loading={loading} />
+          <StatCard label="Total Orders"      value={fmt(bucket?.totalOrders ?? 0)}  type="orders"   loading={loading} />
+          <StatCard label="Volume (Fiat)"     value={fmtINR(bucket?.totalFiat ?? 0)} sub="Total fiat ordered" type="volume" loading={loading} />
+          <StatCard label="Pending"           value={fmt(bucket?.pending ?? 0)}       sub="Awaiting action"   type="pending" loading={loading} />
+          <StatCard label="Success"           value={fmt(bucket?.success ?? 0)}       sub="Approved orders"   type="success" loading={loading} />
+          <StatCard label="Failed / Rejected" value={fmt(bucket?.failed ?? 0)}        sub="Rejected orders"   type="failed"  loading={loading} />
+          <StatCard label="Dispute"           value={fmt(bucket?.dispute ?? 0)}       sub="Under review"      type="dispute" loading={loading} />
           <FulfillCard bucket={bucket} loading={loading} />
         </div>
 
-        {/* ── Breakdown tables ── */}
-        <div className="section-label" style={{ marginTop: 8 }}>Detailed Breakdown</div>
+        {/* Per-fund cards */}
+        <div className="section-label" style={{ marginTop:8 }}>
+          By Fund · {PERIODS.find(p=>p.key===period)?.label}
+        </div>
+        <div className="fund-breakdown-grid" style={{ marginBottom:20 }}>
+          {(loading && !stats)
+            ? Array.from({length:4},(_,i) => (
+                <div key={i} className="fund-card">
+                  <div className="fund-card-header">
+                    <div className="skel" style={{height:18,width:40,borderRadius:5}}/>
+                    <div className="skel" style={{height:14,width:100,flex:1}}/>
+                  </div>
+                  <div className="fund-card-body">
+                    <div className="skel skel-val"/><div className="skel skel-sub" style={{marginTop:8}}/>
+                  </div>
+                </div>
+              ))
+            : byFund.map(fund => (
+                <FundCard key={fund.fundId} fund={fund} period={period} loading={false} />
+              ))
+          }
+        </div>
+
+        {/* Detailed breakdown tables */}
+        <div className="section-label" style={{ marginTop:8 }}>Detailed Breakdown</div>
         <div className="breakdown-row">
           {PERIODS.map((p) => (
-            <BreakdownTable
-              key={p.key}
-              title={p.label}
-              buckets={stats?.[p.key]}
-              loading={loading && !stats}
-            />
+            <BreakdownTable key={p.key} title={p.label} buckets={stats?.[p.key]} loading={loading && !stats} />
           ))}
         </div>
 

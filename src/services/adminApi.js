@@ -85,6 +85,18 @@ const adminPatch = async (url, formData, img) => {
       return handleError(error);
     }
   };
+
+  const adminPut = async (url, formData, img) => {
+    try {
+      const headers = {
+        "Content-Type": img ? "multipart/form-data" : "application/json",
+      };
+      const response = await axiosInstance.patch(url, formData, { headers });
+      return handleResponse(response);
+    } catch (error) {
+      return handleError(error);
+    }
+  };
   
 const adminDelete = async (url) => {
     try {
@@ -109,6 +121,7 @@ const logoutUser = async() => {
 export { 
     adminGet,
     adminPost,
+    adminPut,
     adminPatch,
     adminDelete,
     logoutUser

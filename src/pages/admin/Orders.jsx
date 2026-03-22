@@ -1,4 +1,4 @@
-import { Button, DatePicker, Input, Table, Radio, Flex, Typography, Card, Tooltip } from 'antd';
+import { Button, DatePicker, Input, Table, Radio, Flex, Typography, Card, Tooltip, Select } from 'antd';
 import React, { lazy, useEffect, useState, useRef, useCallback } from 'react';
 import { formatDate } from '../../services/formatDate';
 import { adminGet, adminPatch } from '../../services/adminApi';
@@ -39,20 +39,11 @@ const CheckIcon = () => (
   </svg>
 );
 
-/* ─── IST date range helper ───────────────────────────────────────── */
-// Server is UTC. Admin operates UAE (UTC+4). Orders are India-based.
-// We compute ranges in IST (UTC+5:30) so "Today" means India's today.
+/* ─── IST helpers ─────────────────────────────────────────────────── */
 const IST_OFFSET_MS = 5.5 * 60 * 60 * 1000;
-
-function nowIST() {
-  return new Date(Date.now() + IST_OFFSET_MS);
-}
-function istStartOfDay(y, m, d) {
-  return new Date(Date.UTC(y, m, d, 0, 0, 0) - IST_OFFSET_MS);
-}
-function istEndOfDay(y, m, d) {
-  return new Date(Date.UTC(y, m, d, 23, 59, 59, 999) - IST_OFFSET_MS);
-}
+function nowIST() { return new Date(Date.now() + IST_OFFSET_MS); }
+function istStartOfDay(y, m, d) { return new Date(Date.UTC(y, m, d, 0, 0, 0) - IST_OFFSET_MS); }
+function istEndOfDay(y, m, d)   { return new Date(Date.UTC(y, m, d, 23, 59, 59, 999) - IST_OFFSET_MS); }
 function quickRangeToUTC(preset) {
   const n = nowIST();
   const y = n.getUTCFullYear(), mo = n.getUTCMonth(), d = n.getUTCDate();
@@ -65,6 +56,13 @@ function quickRangeToUTC(preset) {
     default:          return { from: '', to: '' };
   }
 }
+
+/* ─── fundType chip colors ────────────────────────────────────────── */
+const fundTypeColors = {
+  gateway: { color: '#1558b0', bg: '#eff6ff' },
+  clean:   { color: '#15803d', bg: '#f0fdf4' },
+  bank:    { color: '#92400e', bg: '#fffbeb' },
+};
 
 /* ─── Styles ──────────────────────────────────────────────────────── */
 const STYLES = `
@@ -90,14 +88,12 @@ const STYLES = `
   .sel-bar-clear { cursor:pointer; opacity:.75; font-size:11px; text-decoration:underline; }
   .sel-bar-clear:hover { opacity:1; }
 
-  /* quick date strip */
   .quick-strip { background:#fff; padding:8px 20px; border-bottom:1px solid #e4e7ec; display:flex; gap:6px; align-items:center; flex-wrap:wrap; }
   .qd-label { font-size:10.5px; color:#9ca3af; font-family:'IBM Plex Mono',monospace; margin-right:4px; flex-shrink:0; }
   .qd-btn { padding:3px 11px; border-radius:20px; border:1.5px solid #e4e7ec; font-size:11px; font-family:'IBM Plex Mono',monospace; cursor:pointer; background:#fff; color:#374151; transition:all .13s; font-weight:500; white-space:nowrap; }
   .qd-btn:hover  { border-color:#1558b0; color:#1558b0; }
   .qd-btn.active { background:#1558b0; color:#fff; border-color:#1558b0; }
 
-  /* stats strip */
   .stat-strip { background:#f9fafb; border-bottom:1px solid #e4e7ec; padding:8px 20px; display:flex; gap:0; align-items:stretch; }
   .stat-item { display:flex; flex-direction:column; padding:0 24px 0 0; }
   .stat-item + .stat-item { padding-left:24px; border-left:1px solid #e4e7ec; }
@@ -131,6 +127,9 @@ const STYLES = `
   .export-toast .toast-icon { width:20px; height:20px; background:#22c55e; border-radius:50%; display:flex; align-items:center; justify-content:center; }
   @keyframes toastIn { from { transform:translateY(20px); opacity:0; } to { transform:translateY(0); opacity:1; } }
   .drag-hint { font-size:10.5px; color:#9ca3af; font-family:'IBM Plex Mono',monospace; display:flex; align-items:center; gap:4px; }
+
+  /* fund filter select */
+  .fund-filter-select .ant-select-selector { font-family:'IBM Plex Mono',monospace !important; font-size:11px !important; }
 `;
 
 /* ─── Excel helpers ───────────────────────────────────────────────── */
@@ -158,9 +157,9 @@ function exportFullData(orders, filename = 'orders_full_export.xlsx') {
     'User Email': o.userId?.email ?? '',
     USDT: o.usdt ?? '',
     'Fiat (₹)': o.fiat ?? '',
-    'Fund Type': o.fund?.type ?? '',
+    'Fund': o.fund?.type ?? '',
+    'Fund Code': o.fund?.code ?? '',
     'Fund Rate': o.fund?.rate ?? '',
-    'Fund Status': o.fund?.status ?? '',
     'Bank Mode': o.bankCard?.mode ?? '',
     'Account Number': o.bankCard?.accountNumber ?? '',
     IFSC: o.bankCard?.ifsc ?? '',
@@ -172,8 +171,8 @@ function exportFullData(orders, filename = 'orders_full_export.xlsx') {
   }));
   const ws = XLSX.utils.json_to_sheet(rows);
   ws['!cols'] = [
-    {wch:5},{wch:14},{wch:14},{wch:26},{wch:10},{wch:10},{wch:12},{wch:10},
-    {wch:12},{wch:10},{wch:18},{wch:14},{wch:22},{wch:18},{wch:16},{wch:14},{wch:10},
+    {wch:5},{wch:14},{wch:14},{wch:26},{wch:10},{wch:10},{wch:16},{wch:8},
+    {wch:10},{wch:10},{wch:18},{wch:14},{wch:22},{wch:18},{wch:16},{wch:14},{wch:10},
   ];
   const wb = XLSX.utils.book_new();
   XLSX.utils.book_append_sheet(wb, ws, 'Full Orders');
@@ -219,12 +218,12 @@ const QUICK_PRESETS = [
 
 const Orders = () => {
   const [queryObjects, setQueryObjects] = useState({
-    search: '', from: '', to: '', status: 'pending', currentPage: 1, pageSize: 10,
+    search: '', from: '', to: '', status: 'pending', fundType: '', currentPage: 1, pageSize: 10,
   });
   const [totalOrders, setTotalOrders]                   = useState(0);
   const [totalCompletedAmount, setTotalCompletedAmount] = useState(0);
   const [loading, setLoading]         = useState({ table: false });
-  const [actionLoading, setActionLoading] = useState(false); // FIX #1
+  const [actionLoading, setActionLoading] = useState(false);
   const [modalState, setModalState]   = useState({ visible: false, type: '', data: null });
   const [orders, setOrders]           = useState([]);
   const [selectedRowKeys, setSelectedRowKeys] = useState([]);
@@ -232,13 +231,33 @@ const Orders = () => {
   const [quickPreset, setQuickPreset] = useState('all');
   const [stats, setStats]             = useState(null);
   const [statsLoading, setStatsLoading] = useState(false);
+  const [fundOptions, setFundOptions] = useState([]); // for the fund filter dropdown
 
   const isDragging   = useRef(false);
   const dragOverlay  = useRef(null);
   const dragStartPos = useRef({ x: 0, y: 0 });
   const tableRef     = useRef(null);
 
-  /* ── FIX #1: close modal first, then refresh ── */
+  /* ── Fetch fund list for filter dropdown ── */
+  const fetchFundOptions = async () => {
+    try {
+      const res = await adminGet('/fund');
+      if (res?.funds) {
+        setFundOptions([
+          { value: '', label: 'All Funds' },
+          ...res.funds.map(f => ({
+            value: f._id,
+            label: f.type,
+            code: f.code,
+            fundType: f.fundType,
+          })),
+        ]);
+      }
+    } catch (e) { console.error(e); }
+  };
+
+  useEffect(() => { fetchFundOptions(); }, []);
+
   const handleConfirm = async (fulfilledFiat, utr) => {
     const { type, data } = modalState;
     const status = type === 'approve' ? 'success' : 'failed';
@@ -248,9 +267,9 @@ const Orders = () => {
         status,
         id: data._id,
         ...(status === 'success' && { fulfilledFiat }),
-        ...(utr && { UTR: utr }),              // FIX #2: send UTR to backend
+        ...(utr && { UTR: utr }),
       });
-      setModalState({ visible: false, type: '', data: null }); // close first
+      setModalState({ visible: false, type: '', data: null });
       await fetchOrders();
       await fetchStats();
     } catch (err) {
@@ -263,9 +282,9 @@ const Orders = () => {
   const fetchOrders = async () => {
     setLoading((p) => ({ ...p, table: true }));
     try {
-      const { search, from, to, status, currentPage, pageSize } = queryObjects;
+      const { search, from, to, status, fundType, currentPage, pageSize } = queryObjects;
       const res = await adminGet(
-        `/orders?search=${encodeURIComponent(search)}&from=${from}&to=${to}&status=${status}&currentPage=${currentPage}&pageSize=${pageSize}`
+        `/orders?search=${encodeURIComponent(search)}&from=${from}&to=${to}&status=${status}&fundType=${fundType}&currentPage=${currentPage}&pageSize=${pageSize}`
       );
       if (res) {
         setOrders(res.orders);
@@ -276,7 +295,6 @@ const Orders = () => {
     finally { setLoading((p) => ({ ...p, table: false })); }
   };
 
-  /* FIX #3: separate lightweight stats endpoint */
   const fetchStats = async () => {
     setStatsLoading(true);
     try {
@@ -351,6 +369,10 @@ const Orders = () => {
   /* ── Filters ── */
   const handleStatusChange = (e) =>
     setQueryObjects((p) => ({ ...p, status: e.target.value.toLowerCase(), currentPage: 1 }));
+
+  const handleFundTypeChange = (value) =>
+    setQueryObjects((p) => ({ ...p, fundType: value, currentPage: 1 }));
+
   const handleDateRange = (dates) => {
     setQuickPreset('');
     if (!dates) {
@@ -365,7 +387,7 @@ const Orders = () => {
       }));
     }
   };
-  // FIX #4: search covers orderId + accountNumber + accountName (backend handles it)
+
   const handleSearch = (value) =>
     setQueryObjects((p) => ({ ...p, search: value, currentPage: 1 }));
 
@@ -399,13 +421,28 @@ const Orders = () => {
       render: (t) => <span className="amount-cell">{t} <span style={{ color:'#6b7280', fontWeight:400 }}>USDT</span></span> },
     { title: 'Fiat', dataIndex: 'fiat', key: 'fiat',
       render: (t) => <span className="amount-cell">₹{t}</span> },
-    { title: 'Fund', dataIndex: 'fund', key: 'fund',
-      render: (t) => (
-        <Card bodyStyle={{ padding: '4px 8px' }} size="small" style={{ minWidth: 90 }}>
-          <div style={{ fontSize:11.5 }}><div>Type: {t?.type}</div><div>Rate: ₹{t?.rate}</div></div>
-          {t?.status && <div style={{ marginTop:2 }}>{getStatusTag(t.status)}</div>}
-        </Card>
-      ),
+    {
+      title: 'Fund', dataIndex: 'fund', key: 'fund',
+      render: (t) => {
+        const ftCfg = fundTypeColors[t?.fundType] || fundTypeColors.gateway;
+        return (
+          <Card bodyStyle={{ padding: '4px 8px' }} size="small" style={{ minWidth: 90 }}>
+            <div style={{ fontSize:11.5 }}>
+              <div style={{ fontWeight:600, color:'#111827' }}>{t?.type}</div>
+              <div style={{ color:'#6b7280' }}>₹{t?.rate}/USDT</div>
+            </div>
+            <div style={{ display:'flex', alignItems:'center', gap:4, marginTop:3 }}>
+              {t?.code && (
+                <span style={{ fontFamily:'monospace', fontSize:10, fontWeight:700,
+                  color:ftCfg.color, background:ftCfg.bg, borderRadius:4, padding:'1px 5px' }}>
+                  {t.code}
+                </span>
+              )}
+              {t?.status && getStatusTag(t.status)}
+            </div>
+          </Card>
+        );
+      },
     },
     { title: 'Bank / UPI', dataIndex: 'bankCard', key: 'bankCard', width: 200,
       render: (t) => (
@@ -417,7 +454,7 @@ const Orders = () => {
         </Card>
       ),
     },
-    { title: 'UTR', dataIndex: 'UTR', key: 'UTR',   // FIX #2: display UTR
+    { title: 'UTR', dataIndex: 'UTR', key: 'UTR',
       render: (t) => t
         ? <span style={{ fontFamily:'IBM Plex Mono', fontSize:12, color:'#1558b0' }}>{t}</span>
         : <span style={{ color:'#d1d5db', fontSize:11 }}>—</span>,
@@ -471,7 +508,7 @@ const Orders = () => {
           </div>
         </div>
 
-        {/* Quick date preset strip */}
+        {/* Quick date strip */}
         <div className="quick-strip">
           <span className="qd-label">Range (IST):</span>
           {QUICK_PRESETS.map((p) => (
@@ -503,7 +540,34 @@ const Orders = () => {
             <Radio.Button value="success">Success</Radio.Button>
             <Radio.Button value="failed">Failed</Radio.Button>
           </Radio.Group>
-          {/* FIX #4: unified search */}
+
+          {/* Fund filter dropdown */}
+          <Select
+            className="fund-filter-select"
+            value={queryObjects.fundType || ''}
+            onChange={handleFundTypeChange}
+            style={{ width: 200 }}
+            size="small"
+            options={fundOptions.map(opt => ({
+              value: opt.value,
+              label: opt.value === '' ? (
+                <span style={{ fontFamily:'IBM Plex Mono', fontSize:11, color:'#6b7280' }}>All Funds</span>
+              ) : (
+                <span style={{ display:'flex', alignItems:'center', gap:6 }}>
+                  {opt.code && (
+                    <span style={{
+                      fontFamily:'monospace', fontSize:10, fontWeight:700,
+                      color: fundTypeColors[opt.fundType]?.color || '#374151',
+                      background: fundTypeColors[opt.fundType]?.bg || '#f1f5f9',
+                      borderRadius:4, padding:'1px 5px', flexShrink:0,
+                    }}>{opt.code}</span>
+                  )}
+                  <span style={{ fontFamily:'IBM Plex Mono', fontSize:11 }}>{opt.label}</span>
+                </span>
+              ),
+            }))}
+          />
+
           <Search
             placeholder="Order ID / Account No / Account Name"
             allowClear
@@ -544,7 +608,6 @@ const Orders = () => {
         </div>
       </div>
 
-      {/* FIX #1 + #2: actionLoading separate from table loading, showUTR prop */}
       <ConfirmModal
         visible={modalState.visible}
         onConfirm={handleConfirm}
