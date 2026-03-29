@@ -328,7 +328,7 @@ const Funds = () => {
     { title: 'Date', dataIndex: 'createdAt', key: 'createdAt', width: 130,
       render: (text) => <span className="fund-date">{text && formatDate(text)}</span> },
     { title: 'Rate / USDT', dataIndex: 'rate', key: 'rate', width: 120,
-      render: (text) => <span className="fund-rate">₹{Math.floor(text).toFixed(2)}</span> },
+      render: (text) => <span className="fund-rate">₹{(text).toFixed(2)}</span> },
     { title: 'Mode', dataIndex: 'paymentMode', key: 'paymentMode', width: 90,
       render: (text) => <span className="fund-mono" style={{ textTransform:'capitalize' }}>{text}</span> },
     {
