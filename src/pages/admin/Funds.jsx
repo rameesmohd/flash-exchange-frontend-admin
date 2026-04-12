@@ -411,7 +411,7 @@ const Funds = () => {
           </div>
         </div>
 
-        <div className="fund-table-wrap">
+        <div className="fund-table-wrap" style={{ position: 'relative', zIndex: 0, isolation: 'isolate' }}>
           <DndContext
             sensors={sensors}
             collisionDetection={closestCenter}
