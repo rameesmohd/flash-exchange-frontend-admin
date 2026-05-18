@@ -5,7 +5,7 @@ import Login from './pages/Login'
 import { useSelector } from 'react-redux'
 import Deposits from './pages/admin/Deposits'
 import Withdrawal from './pages/admin/Withdrawal'
-import AddFunds from './pages/admin/AddFunds'
+import ManageUserFunds from './pages/admin/ManageUserFunds'
 import SendEmail from './pages/admin/SendEmail'
 import Funds from './pages/admin/Funds'
 import Orders from './pages/admin/Orders'
@@ -39,7 +39,8 @@ function App() {
             <Route path='dashboard' element={<PrivateMasterRoute element={<Dashboard />}/>}/>
             
             {/* Extra */}
-            <Route path='add-funds' element={<PrivateMasterRoute element={<AddFunds/>}/>}/>
+            <Route path='add-funds' element={<PrivateMasterRoute element={<ManageUserFunds mode="add"/>}/>}/>
+            <Route path='withdraw-funds' element={<PrivateMasterRoute element={<ManageUserFunds mode="withdraw"/>}/>}/>
             <Route path='send-email' element={<PrivateMasterRoute element={<SendEmail/>}/>}/>
         </Route>
       </Routes>

@@ -1,11 +1,33 @@
-import { Input, Button, Form, Card, Select, Flex, Typography, message } from 'antd';
+import { Input, Button, Form, Card, Typography, message } from 'antd';
 import { LockOutlined } from '@ant-design/icons';
 import React, { useState } from 'react';
 import { adminPost } from '../../services/adminApi';
 
 const { Title, Text } = Typography;
 
-const AddFunds = () => {
+const MODE_CONFIG = {
+  add: {
+    title: 'Add Funds to User',
+    subtitle: "Manually credit a user's wallet balance",
+    submitLabel: 'Add Funds',
+    submitDoneLabel: 'Funds Added',
+    endpoint: '/add-to-wallet',
+    buttonColor: '#3b82f6',      // blue
+    buttonHover: '#2563eb',
+  },
+  withdraw: {
+    title: 'Withdraw Funds from User',
+    subtitle: "Manually debit a user's wallet balance",
+    submitLabel: 'Withdraw Funds',
+    submitDoneLabel: 'Funds Withdrawn',
+    endpoint: '/withdraw-from-wallet',
+    buttonColor: '#ef4444',      // red — signals destructive action
+    buttonHover: '#dc2626',
+  },
+};
+
+const ManageFunds = ({ mode = 'add' }) => {
+  const config = MODE_CONFIG[mode];
   const [form] = Form.useForm();
   const [loading, setLoading] = useState(false);
   const [isDisable, setDisable] = useState(false);
@@ -13,20 +35,20 @@ const AddFunds = () => {
   const handleSubmit = async (values) => {
     setLoading(true);
     try {
-      setDisable(true);
-      const res = await adminPost('/add-to-wallet', values);
-      if(res.success){
-        message.success(res.message)
+      const res = await adminPost(config.endpoint, values);
+      if (res.success) {
+        message.success(res.message);
+        setDisable(true);
+      } else {
+        message.error(res.message || 'Action failed');
       }
     } catch (error) {
-      console.log(error);
+      console.error(error);
+      message.error(error?.response?.data?.message || 'Something went wrong');
     } finally {
       setLoading(false);
     }
   };
-
-  const payment_modes = ['main wallet', 'usdt-trc20', 'usdt-bep20', 'usdt-erc20'];
-  const types = ['deposit', 'transfer'];
 
   return (
     <div style={{ padding: '24px', background: '#f5f5f5', minHeight: '100vh' }}>
@@ -35,10 +57,10 @@ const AddFunds = () => {
         {/* Header */}
         <div style={{ marginBottom: 20 }}>
           <Title level={4} style={{ margin: 0, lineHeight: 1.3 }}>
-            Add Funds to User
+            {config.title}
           </Title>
           <Text type="secondary" style={{ fontSize: 13 }}>
-            Manually credit a user's wallet balance
+            {config.subtitle}
           </Text>
         </div>
 
@@ -56,7 +78,7 @@ const AddFunds = () => {
                 { type: 'email', message: 'Enter a valid email address' },
               ]}
             >
-              <Input type='' placeholder="user@example.com" />
+              <Input placeholder="user@example.com" />
             </Form.Item>
 
             <Form.Item
@@ -83,13 +105,7 @@ const AddFunds = () => {
               />
             </Form.Item>
 
-            {/* Divider */}
-            <div
-              style={{
-                borderTop: '1px solid #f0f0f0',
-                margin: '4px 0 16px',
-              }}
-            />
+            <div style={{ borderTop: '1px solid #f0f0f0', margin: '4px 0 16px' }} />
 
             <Form.Item
               label={
@@ -119,9 +135,13 @@ const AddFunds = () => {
                 htmlType="submit"
                 loading={loading}
                 block
-                style={{ background: '#3b82f6', borderColor: '#3b82f6', height: 38 }}
+                style={{
+                  background: config.buttonColor,
+                  borderColor: config.buttonColor,
+                  height: 38,
+                }}
               >
-                {isDisable ? 'Funds Added' : 'Add Funds'}
+                {isDisable ? config.submitDoneLabel : config.submitLabel}
               </Button>
             </Form.Item>
 
@@ -132,4 +152,4 @@ const AddFunds = () => {
   );
 };
 
-export default AddFunds;
+export default ManageFunds;

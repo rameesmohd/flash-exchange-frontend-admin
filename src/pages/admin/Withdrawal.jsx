@@ -4,6 +4,7 @@ import { formatDate } from '../../services/formatDate';
 import ConfirmModal from '../../components/common/ConfirmModal';
 import { adminGet, adminPatch } from '../../services/adminApi';
 import { Tag } from 'antd';
+import { useNavigate } from 'react-router-dom';
 
 const { RangePicker } = DatePicker;
 const { Search } = Input;
@@ -117,6 +118,7 @@ const Withdrawal = () => {
   const [actionLoading, setActionLoading]     = useState(false);
   const [loading, setLoading]                 = useState({ table: false });
   const [modalState, setModalState]           = useState({ visible: false, type: '', data: null });
+  const navigate= useNavigate()
 
   const [queryObjects, setQueryObjects] = useState({
     search: '', from: '', to: '', status: 'pending', currentPage: 1, pageSize: 10,
@@ -273,6 +275,7 @@ const Withdrawal = () => {
   const handleSearch = (value) =>
     setQueryObjects((p) => ({ ...p, search: value, currentPage: 1 }));
 
+  
   return (
     <>
       <style>{STYLES}</style>
@@ -283,7 +286,15 @@ const Withdrawal = () => {
           <div>
             <div className="wd-title">Withdrawal History</div>
             <div className="wd-subtitle">{totalWithdrawal} total withdrawals</div>
-          </div>
+            </div>
+          <Button
+            type="primary"
+            // icon={<PlusOutlined />}
+            style={{ background: '#3b82f6', borderColor: '#3b82f6' }}
+            onClick={() => navigate('/withdraw-funds')}
+          >
+            Withdraw Funds from User
+          </Button>
         </div>
 
         {/* Quick date preset strip */}
